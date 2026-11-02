@@ -160,6 +160,7 @@ The game's guide to its scripts, with more of these pictures: [Game Scripts Guid
 - **Experimental.** No promise of stability yet; pin an exact version.
 - **Synchronous.** Every call runs on the calling thread, so a long-running program blocks it.
 - **One global.** The library puts one `Hazel` object on the global object.
+- **A console line for slow reads.** A text that only Hazel's slower, recovering parser can read (an unclosed bracket, such as `let x = (`) prints a `SLOW PARSE (...)` line to the console when it is read.
 - **Deep programs need a bigger stack.** Hazel's analysis recurses deeply: in Node, a module of about 150 members overflows the default stack (`Stack overflow`). Raise it: `node --stack-size=32000 app.js`, with the shell's own limit raised to match (`ulimit -s 65536`), or Node crashes instead.
 
 ## About Hazel
