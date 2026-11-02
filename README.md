@@ -17,7 +17,7 @@ double(21); // 42
 
 Hazel type-checks and runs programs that are not finished: a program with holes or type errors still runs, around them. That makes it a good language for code a page lets people write and change while it runs: rules, scripts, exercises.
 
-We call a JavaScript program whose event handlers are Hazel functions a **Hazlet**: the page calls a Hazel function with each event and acts on what it returns. [Messed Up Dress Up](https://matthewhammer.org/kids-choice-games/dress-up/), a game whose rooms can be scripted in Hazel, is the first.
+We call a JavaScript program whose event handlers are Hazel functions a **Hazlet**: the page calls a Hazel function with each event and acts on what it returns. The first is a game, below under [Prototype use case](#prototype-use-case).
 
 ## Install
 
@@ -136,6 +136,20 @@ Each module sees the preamble and the modules before it, as `Common.greet`, and 
 - `ms`: meant to be how long the call took, in milliseconds. In 0.0.1 it reads 0 (a known bug); time the call yourself.
 
 Hazel remembers the texts of the last program it read, part by part, so calling again after one module changes reads only that module again.
+
+## Prototype use case
+
+[Messed Up Dress Up](https://matthewhammer.org/kids-choice-games/dress-up/) is a dress-up and adventure game in plain JavaScript, made with two young players. It is the first Hazlet: five of its rooms hand their events to a rule, a function `on_event : (Globals, Event) -> Cmd`, which players can write in Hazel (or in JavaScript, or in Fumola) in the game's 📜 Scripting panel, while they play. The game builds one program from the panel's modules with `Hazel.runProgram`, then calls the room's rule with each event and runs the commands it returns.
+
+The trap room's rule in Hazel, beside the game:
+
+<img src="https://matthewhammer.org/kids-choice-games/dress-up/reports/017/pictures/04-max-trap-room.webp" width="720" alt="The game's Scripting panel at full size: the game's view at the top left, and the trap room's rule in Hazel, a case on the event: a red lever pulled flips the pits wired to it, a blue lever pulled moves the boulders.">
+
+Playing and reading at once: each event the room hands to Hazel, and Hazel's answer, in the panel's event log:
+
+<img src="https://matthewhammer.org/kids-choice-games/dress-up/reports/017/pictures/05-log.webp" width="720" alt="The event log: calls of TrapRoom.on_event with Pull(L) and Pull(R) events, each with the event and the rule's answer as JSON, what the call changed (a lever from false to true), and how long the rule and the call took.">
+
+The game's guide to its scripts, with more of these pictures: [Game Scripts Guide](https://matthewhammer.org/kids-choice-games/dress-up/reports/017/).
 
 ## Size and speed
 
