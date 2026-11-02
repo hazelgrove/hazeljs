@@ -1,0 +1,54 @@
+{
+  "name": "hazeljs",
+  "version": "0.0.1",
+  "description": "Hazel, the typed functional language with holes, as a JavaScript library: analyze and run Hazel programs from Node or a web page, and call their functions from JS. Experimental.",
+  "keywords": [
+    "hazel",
+    "hazlet",
+    "programming-language",
+    "functional-programming",
+    "typed-holes",
+    "live-programming",
+    "interpreter",
+    "scripting"
+  ],
+  "homepage": "https://hazel.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hazelgrove/hazel.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hazelgrove/hazel/issues"
+  },
+  "license": "MIT",
+  "author": "The Hazel contributors (https://hazel.org)",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "require": "./index.js"
+    },
+    "./hazel-lib.js": "./hazel-lib.js",
+    "./package.json": "./package.json"
+  },
+  "unpkg": "./hazel-lib.js",
+  "jsdelivr": "./hazel-lib.js",
+  "files": [
+    "index.js",
+    "index.mjs",
+    "index.d.ts",
+    "hazel-lib.js",
+    "hazelnut.svg",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "hazel": {
+    "commit": "0d66c36618ee709a60f91cf01fbf0b46121f2499",
+    "branch": "js-library-embed",
+    "pr": "https://github.com/hazelgrove/hazel/pull/2719"
+  }
+}

@@ -1,0 +1,157 @@
+<p align="center"><img src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.1/hazelnut.svg" width="120" height="120" alt="Hazel's hazelnut logo"></p>
+
+# hazeljs
+
+[Hazel](https://hazel.org), the typed functional programming language with holes, as a JavaScript library. Analyze and run Hazel programs from Node or a web page, and call the functions they define from JavaScript.
+
+```js
+const Hazel = require("hazeljs");
+
+const double = Hazel.run("fun (x : Int) -> x * 2").value;
+double(21); // 42
+```
+
+> **Experimental.** This is a prototype (0.0.x): the API may change in any release. It is built from the draft library in [hazelgrove/hazel#2711](https://github.com/hazelgrove/hazel/pull/2711) and [#2719](https://github.com/hazelgrove/hazel/pull/2719), at commit `0d66c36618` (`Hazel.build` names it).
+
+## Why
+
+Hazel type-checks and runs programs that are not finished: a program with holes or type errors still runs, around them. That makes it a good language for code a page lets people write and change while it runs: rules, scripts, exercises.
+
+We call a JavaScript program whose event handlers are Hazel functions a **Hazlet**: the page calls a Hazel function with each event and acts on what it returns. [Messed Up Dress Up](https://matthewhammer.org/kids-choice-games/dress-up/), a game whose rooms can be scripted in Hazel, is the first.
+
+## Install
+
+```sh
+npm install hazeljs
+```
+
+Or in a web page, from a CDN that serves npm packages:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.1/hazel-lib.js"></script>
+<script>
+  console.log(Hazel.run("1 + 2").value); // 3
+</script>
+```
+
+The script defines a global `Hazel` (`window.Hazel`). The same file is at `https://unpkg.com/hazeljs@0.0.1/hazel-lib.js`.
+
+## Usage
+
+CommonJS:
+
+```js
+const Hazel = require("hazeljs");
+```
+
+ES modules, the whole object or its parts:
+
+```js
+import Hazel from "hazeljs";
+import { analyze, run, analyzeProgram, runProgram } from "hazeljs";
+```
+
+TypeScript types are included (`index.d.ts`).
+
+### Analyze and run
+
+```js
+Hazel.analyze("1 + true");
+// { errors: ["Error in term:\n  true\nNature of error: Expecting type Int but got inconsistent type Bool"] }
+
+Hazel.run("let x = 2 in x * 21");
+// { errors: [], value: 42 }
+```
+
+A program's errors do not stop it running: Hazel evaluates around its holes and errors, so `value` is there either way, and your code decides which errors it accepts.
+
+### Call Hazel functions from JavaScript
+
+Analyze a program once, then call its functions as often as you like:
+
+```js
+const rule = Hazel.run(`
+  type Cmd = + Done + Flip(Int, Cmd) in
+  type Event = + Pull(Int) in
+  fun e : Event -> case e | Pull(l) => Flip(l, Done) end`).value;
+
+rule({ tag: "Pull", value: 2 }); // { tag: "Flip", value: [2, { tag: "Done" }] }
+```
+
+## API
+
+| Call | Returns |
+|---|---|
+| `Hazel.analyze(text)` | `{ errors }`: the program's error messages, as strings. |
+| `Hazel.run(text)` | `{ errors, value }`: the same, and the program's value. |
+| `Hazel.analyzeProgram(spec)` | `{ ok, errors, holes, programHoles, incomplete, programIncomplete, ms }`, for a program of named modules (below). |
+| `Hazel.runProgram(spec)` | The same, and `value`. |
+| `Hazel.version` | The library's own label, such as `"0.1 (draft, js-library)"`. |
+| `Hazel.build` | The hazelgrove/hazel commit this build is from. |
+
+## Values
+
+Values convert both ways: Hazel's results come back as these, and a JavaScript value passed to a Hazel function goes in as these.
+
+| Hazel | JavaScript |
+|---|---|
+| `Int`, `Float` and the other numbers | number |
+| `Bool` | boolean |
+| `String` | string |
+| a list | an array |
+| `()` | `null` |
+| a labeled tuple `(x = 1, y = 2)` | an object `{x: 1, y: 2}` |
+| another tuple `(1, true)` | an array `[1, true]` |
+| a constructor `A`, applied `B(3)` | `{tag: "A"}`, `{tag: "B", value: 3}` |
+| a function | a JavaScript function (one argument, or several as a tuple) |
+
+Anything else (a type, a hole) comes back as `{hazel: "<its printing>"}`.
+
+A constructor from JavaScript has no type of its own, so Hazel checks it where a parameter is annotated (`fun e : Event -> ...`). An applied constructor is checked whole, tag and payload; one that does not fit the type stays stuck at the parameter, and the call returns `{hazel: ...}`.
+
+## A program of modules
+
+For a page with an editor per module, hand Hazel the texts and let it build one program from them:
+
+```js
+const result = Hazel.runProgram({
+  preamble: "type Cmd = + Done + Say(String) in",  // definitions every module sees, ending in `in`
+  modules: [
+    { name: "Common", text: "let greet = fun (s : String) -> Say(s)" },
+    { name: "Room", text: "let on_event = fun (n : Int) -> Common.greet(\"hi\")" },
+  ],
+  tail: "Room.on_event",  // what the program gives; () if left out
+});
+
+result.ok;       // true: no errors, no holes, nothing left unfinished
+result.value(1); // { tag: "Say", value: "hi" }
+```
+
+Each module sees the preamble and the modules before it, as `Common.greet`, and the tail sees them all. A module's text is its body: its members, with no `in`.
+
+- `errors`: `[{ module, message, id }]`, where `module` is the name of the module the error is in, or `null` for the preamble and the tail.
+- `holes`: each module's holes, by name (`{ Common: 0, Room: 1 }`); `programHoles`, the preamble's and the tail's.
+- `incomplete`: each module's brackets and keywords left open (a `(` with no `)`, a `case` with no `end`) or closed with no opener; `programIncomplete`, the preamble's and the tail's.
+- `ok`: no errors, no holes and nothing incomplete. A function still being written can have holes and no errors, so act on `value` only when `ok`.
+- `ms`: meant to be how long the call took, in milliseconds. In 0.0.1 it reads 0 (a known bug); time the call yourself.
+
+Hazel remembers the texts of the last program it read, part by part, so calling again after one module changes reads only that module again.
+
+## Size and speed
+
+`hazel-lib.js` is about 2.8 MB, 640 KB gzipped. Measured in Node 22 on a laptop: `require("hazeljs")` takes about 170 ms, and running a small program about 30 ms. A module of 100 short members takes about 110 ms to analyze, and one of 400 about 2.3 s; after an edit, only the modules whose text changed are read again.
+
+## Limits
+
+- **Experimental.** No promise of stability yet; pin an exact version.
+- **Synchronous.** Every call runs on the calling thread, so a long-running program blocks it.
+- **One global.** The library puts one `Hazel` object on the global object.
+- **Deep programs need a bigger stack.** Hazel's analysis recurses deeply: in Node, a module of about 150 members overflows the default stack (`Stack overflow`). Raise it: `node --stack-size=32000 app.js`, with the shell's own limit raised to match (`ulimit -s 65536`), or Node crashes instead.
+
+## About Hazel
+
+Hazel is developed by the Hazel team: see [hazel.org](https://hazel.org) for the project, its papers and the people who make it, and the [contributors on GitHub](https://github.com/hazelgrove/hazel/graphs/contributors) for who has worked on the code. Its source is [hazelgrove/hazel](https://github.com/hazelgrove/hazel), and questions and bugs go to its [issue tracker](https://github.com/hazelgrove/hazel/issues).
+
+## License
+
+MIT, as Hazel is. See [LICENSE](LICENSE).
