@@ -7,8 +7,8 @@
 //   typed    a function with an annotated parameter, (cells : [Cell]) -> 0, given n*n cells
 //            from JavaScript: the argument converted, and checked against its annotation
 //   untyped  the same without the annotation: the conversion alone
-//   held     a function Hazel returned holding a list of n*n numbers, called from JavaScript:
-//            whether a call pays for what the function holds
+//   held     a function Hazel returned holding a list of n*n numbers, which it reads (not walks)
+//            when called from JavaScript: whether a call pays for what the function holds
 // and, where the build has Hazel.value (the handles trial), typed again with the cells passed as
 // a handle. Time: the median of a call's milliseconds. Space: the bytes one call allocates, read
 // from the heap with a young generation big enough that no collection runs during the call, and
@@ -26,7 +26,7 @@ if (typeof gc !== "function") throw new Error("run node with --expose-gc");
 const program = `type Cell = (col = Int, row = Int, kind = String) in
 let typed = fun (cells : [Cell]) -> 0 in
 let untyped = fun cells -> 0 in
-let held = fun (xs : [Int]) -> fun (i : Int) -> i in
+let held = fun (xs : [Int]) -> fun (i : Int) -> case xs | [] => 0 | _ :: _ => i end in
 (typed = typed, untyped = untyped, held = held)`;
 const r = H.run(program);
 if (r.errors.length) throw new Error(r.errors.join("\n"));
