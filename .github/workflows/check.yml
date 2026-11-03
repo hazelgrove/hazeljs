@@ -19,6 +19,8 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: npm install --global typescript@5.9.3
       - name: Pack, install into the examples, run them
-        run: TMPDIR=$RUNNER_TEMP TSC=tsc ./scripts/check-examples.sh | tee check.log
+        run: |
+          TMPDIR=$RUNNER_TEMP TSC=tsc ./scripts/check-examples.sh | tee check.log
       - name: The page, in headless Firefox
-        run: python3 scripts/check-browser.py "$(sed -n 's/^browser: //p' check.log)"
+        run: |
+          python3 scripts/check-browser.py "$(sed -n 's/^browser: //p' check.log)"
