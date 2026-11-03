@@ -1,0 +1,52 @@
+# Build the package's hazel-lib.js from a commit of hazelgrove/hazel, on GitHub's machines
+# (scripts/build.sh), and push it to a branch of its own, build/<commit>, with package.json's
+# "hazel" field naming the commit. Merge that branch to take the new build; a release then
+# publishes it. Run by hand: Actions, "Build hazel-lib.js", Run workflow.
+name: Build hazel-lib.js
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: "The hazelgrove/hazel commit to build"
+        required: true
+      branch:
+        description: "Its branch, for package.json (empty: keep the one recorded)"
+        required: false
+      pr:
+        description: "Its pull request's URL, for package.json (empty: keep the one recorded)"
+        required: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    steps:
+      # Hazel at the workspace root, as its toolchain action expects; this package beside it
+      - uses: actions/checkout@v4
+        with:
+          repository: hazelgrove/hazel
+          ref: ${{ inputs.commit }}
+      - uses: actions/checkout@v4
+        with:
+          path: pkg
+      - uses: ./.github/actions/setup-hazel-toolchain
+      - name: Build hazel-lib.js and record its commit
+        shell: bash
+        env:
+          COMMIT: ${{ inputs.commit }}
+          BRANCH: ${{ inputs.branch }}
+          PR: ${{ inputs.pr }}
+        run: ./pkg/scripts/build.sh . "$COMMIT" "$BRANCH" "$PR" | tee build.log
+      - name: Push it to a branch of its own
+        shell: bash
+        run: |
+          cd pkg
+          short=$(node -p "require('./package.json').hazel.commit.slice(0, 10)")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "build/$short"
+          git add hazel-lib.js package.json
+          git commit -m "hazel-lib.js built from hazelgrove/hazel at $short, on GitHub's machines (the Build hazel-lib.js workflow)"
+          git push origin "build/$short"
+          { echo '## Build hazel-lib.js'; echo '```'; cat ../build.log; echo "branch: build/$short"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

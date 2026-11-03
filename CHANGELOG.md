@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `scripts/build.sh` builds `hazel-lib.js` from a hazelgrove/hazel commit and records it in `package.json`; the **Build hazel-lib.js** workflow runs it on GitHub's machines and pushes the result to a branch `build/<commit>`. Neither is in the published package.
+
 ## 0.0.3 (2026-11-03)
 
 The same `hazel-lib.js` as 0.0.1 and 0.0.2 (hazelgrove/hazel at `0d66c36618`); what changes is the package's description and its README.
