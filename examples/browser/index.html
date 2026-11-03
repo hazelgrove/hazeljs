@@ -1,0 +1,19 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>hazeljs: browser example</title>
+<!-- hazeljs in a plain page: the script defines window.Hazel. Installed with npm, the file is
+     node_modules/hazeljs/hazel-lib.js; from a CDN, https://cdn.jsdelivr.net/npm/hazeljs@0.0.1/hazel-lib.js -->
+<script src="node_modules/hazeljs/hazel-lib.js"></script>
+<pre id="out">running…</pre>
+<script>
+  const out = [];
+  const check = (what, ok) => out.push((ok ? "ok   " : "FAIL ") + what);
+  const r = Hazel.run("let x = 2 in x * 21");
+  check("run: 42", r.value === 42 && r.errors.length === 0);
+  check("analyze: one error in 1 + true", Hazel.analyze("1 + true").errors.length === 1);
+  const rule = Hazel.run("type Event = + Pull(Int) in fun e : Event -> case e | Pull(l) => l * 2 end").value;
+  check("a Hazel function called from JS", rule({ tag: "Pull", value: 21 }) === 42);
+  const failed = out.some(l => l.startsWith("FAIL"));
+  document.getElementById("out").textContent = out.join("\n") + "\n\nbuilt from " + Hazel.build;
+  document.title = failed ? "FAIL" : "ok";
+</script>
