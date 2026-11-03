@@ -1,0 +1,50 @@
+# What a call into Hazel costs, in time and space, for several builds of hazel-lib.js
+# (bench/boundary.mjs; ^ticket(681)), on GitHub's machines: the package's own build and the trial
+# branches that convert JS values directly. The builds run interleaved, round by round. Run by hand:
+# Actions, "Boundary benchmark", Run workflow.
+name: Boundary benchmark
+on:
+  workflow_dispatch:
+    inputs:
+      sizes:
+        description: "Grid sides n (n*n cells), comma-separated"
+        default: "8,16,32,64"
+      rounds:
+        description: "Rounds, each running every build once"
+        default: "2"
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download the builds
+        run: |
+          get() { mkdir -p "libs/$1"; curl -fsSL -A "Mozilla/5.0" "$2" -o "libs/$1/hazel-lib.js"; echo "$1: $(wc -c < "libs/$1/hazel-lib.js") bytes from $2"; }
+          get base https://cdn.jsdelivr.net/npm/hazeljs@0.0.3/hazel-lib.js
+          get floor https://build.hazel.org/lib-floor/hazel-lib.js
+          get closures https://build.hazel.org/lib-closures/hazel-lib.js
+          get handles https://build.hazel.org/trial/r25-handles/hazel-lib.js
+      - name: Run, the builds interleaved
+        shell: bash
+        env:
+          SIZES: ${{ inputs.sizes }}
+          ROUNDS: ${{ inputs.rounds }}
+        run: |
+          ulimit -s unlimited || true
+          for round in $(seq 1 "$ROUNDS"); do
+            for b in base floor closures handles; do
+              node --expose-gc --max-semi-space-size=256 --stack-size=8000 bench/boundary.mjs "libs/$b/hazel-lib.js" "${b}_$round" "$SIZES" 1
+            done
+          done 2>&1 | grep -v '^SLOW PARSE' | tee bench.log
+          { echo '## Boundary benchmark'; echo '```'; grep '^BOUNDARY' bench.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: boundary
+          path: |
+            bench.log
+            boundary-*.json
