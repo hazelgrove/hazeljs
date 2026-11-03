@@ -1,4 +1,4 @@
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.2/hazelnut.svg" width="120" height="120" alt="Hazel's hazelnut logo"></p>
+<p align="center"><img src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.3/hazelnut.svg" width="120" height="120" alt="Hazel's hazelnut logo"></p>
 
 # hazeljs
 
@@ -32,13 +32,13 @@ npm install hazeljs
 Or in a web page, from a CDN that serves npm packages:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.2/hazel-lib.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.3/hazel-lib.js"></script>
 <script>
   console.log(Hazel.run("1 + 2").value); // 3
 </script>
 ```
 
-The script defines a global `Hazel` (`window.Hazel`). The same file is at `https://unpkg.com/hazeljs@0.0.2/hazel-lib.js`.
+The script defines a global `Hazel` (`window.Hazel`). The same file is at `https://unpkg.com/hazeljs@0.0.3/hazel-lib.js`.
 
 ## Usage
 
@@ -137,7 +137,7 @@ Each module sees the preamble and the modules before it, as `Common.greet`, and 
 - `holes`: each module's holes, by name (`{ Common: 0, Room: 1 }`); `programHoles`, the preamble's and the tail's.
 - `incomplete`: each module's brackets and keywords left open (a `(` with no `)`, a `case` with no `end`) or closed with no opener; `programIncomplete`, the preamble's and the tail's.
 - `ok`: no errors, no holes and nothing incomplete. A function still being written can have holes and no errors, so act on `value` only when `ok`.
-- `ms`: meant to be how long the call took, in milliseconds. In 0.0.1 and 0.0.2 it reads 0 (a known bug); time the call yourself.
+- `ms`: meant to be how long the call took, in milliseconds. In 0.0.1 to 0.0.3 it reads 0 (a known bug); time the call yourself.
 
 Hazel remembers the texts of the last program it read, part by part, so calling again after one module changes reads only that module again.
 

@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.0.3 (2026-11-03)
+
+The same `hazel-lib.js` as 0.0.1 and 0.0.2 (hazelgrove/hazel at `0d66c36618`); what changes is the package's description and its README.
 
 - The tagline, in the README, on GitHub and in `package.json`'s description: "Hazel edit boxes that extend ordinary JavaScript programs with custom behavior."
 - README: Errors, holes and unfinished code: Messed Up Dress Up's type error as an example, what `analyzeProgram` reports, how the game shows it, and running anyway. Limits: errors name a term, not a place; a stuck value is a debug printout.

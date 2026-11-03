@@ -1,6 +1,6 @@
 {
   "name": "hazeljs",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Hazel edit boxes that extend ordinary JavaScript programs with custom behavior. Experimental.",
   "keywords": [
     "hazel",
