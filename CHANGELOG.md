@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The package's source has a home: [hazelgrove/hazeljs](https://github.com/hazelgrove/hazeljs) (`repository` and `bugs` point there now; Hazel itself is still [hazelgrove/hazel](https://github.com/hazelgrove/hazel)).
 - `examples/`: Node with `require`, Node with `import`, TypeScript (strict, `tsc --noEmit`) and a plain web page, each written as a user would use the package.
 - `scripts/check-examples.sh` packs the package, installs the tarball into a copy of each example and runs them; `scripts/check-browser.py` opens the page in headless Firefox; `.github/workflows/check.yml` runs both on Node 18, 20 and 22. Neither file is in the published package.
 

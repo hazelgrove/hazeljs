@@ -15,10 +15,10 @@
   "homepage": "https://hazel.org",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hazelgrove/hazel.git"
+    "url": "git+https://github.com/hazelgrove/hazeljs.git"
   },
   "bugs": {
-    "url": "https://github.com/hazelgrove/hazel/issues"
+    "url": "https://github.com/hazelgrove/hazeljs/issues"
   },
   "license": "MIT",
   "author": "The Hazel contributors (https://hazel.org)",
