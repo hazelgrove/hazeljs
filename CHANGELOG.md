@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- README: "Is it really Hazel?": how to check that `hazel-lib.js` is what its commit of hazelgrove/hazel compiles to. `scripts/verify-build.sh` rebuilds it and compares, and the **Verify hazel-lib.js** workflow runs that on GitHub. Neither file is in the published package.
+
 ## 0.0.2 (2026-11-03)
 
 The same `hazel-lib.js` as 0.0.1 (hazelgrove/hazel at `0d66c36618`); what changes is the package around it.

@@ -155,6 +155,31 @@ The game's guide to its scripts, with more of these pictures: [Game Scripts Guid
 
 `hazel-lib.js` is about 2.8 MB, 640 KB gzipped. Measured in Node 22 on a laptop: `require("hazeljs")` takes about 170 ms, and running a small program about 30 ms. A module of 100 short members takes about 110 ms to analyze, and one of 400 about 2.3 s; after an edit, only the modules whose text changed are read again.
 
+## Is it really Hazel?
+
+`hazel-lib.js` is 2.8 MB of compiled JavaScript, so reading it tells you little. What you can check is that it is exactly what Hazel's source compiles to, at a commit you can read.
+
+**It names its commit.** `Hazel.build` returns the hazelgrove/hazel commit it was built from, and the `hazel` field of `package.json` names the same commit, with its branch and pull request. For this release that is `0d66c36618ee709a60f91cf01fbf0b46121f2499`.
+
+**Rebuild it and compare.** With a clone of [hazelgrove/hazel](https://github.com/hazelgrove/hazel) and its toolchain set up (see its README), run
+
+```sh
+scripts/verify-build.sh path/to/hazel
+```
+
+It checks out that commit, builds `hazel-lib.js` the way Hazel's own Deploy workflow does (the release profile, with `GITHUB_SHA` set to the commit), and compares the two files. Every byte must match except one comment line, `//# buildInfo:`, where js_of_ocaml names its own version label (`5.9.1` from one install, `5.9.1+5.9.1` from Hazel's lock file). Without that line, this release's file has the SHA-256 `4695853925917b8dc8514a78c3adbd3140a2277d79ab2c27612ce1595e08e856`.
+
+**Or let GitHub rebuild it.** This repository's **Verify hazel-lib.js** workflow runs the same script on GitHub's machines, from a fresh clone of Hazel. Anyone can run it from the Actions tab, and its runs are public.
+
+**Hazel's own CI built it too.** Hazel's Deploy workflow builds every commit pushed to hazelgrove/hazel. Its build of this commit ([run 39680368678](https://github.com/hazelgrove/hazel/actions/runs/39680368678)) gives the same hash without the buildInfo line. That build is served at `https://build.hazel.org/js-library-embed/hazel-lib.js` only until the branch gets a newer commit:
+
+```sh
+curl -sL https://build.hazel.org/js-library-embed/hazel-lib.js | grep -v '^//# buildInfo:' | sha256sum
+grep -v '^//# buildInfo:' node_modules/hazeljs/hazel-lib.js | sha256sum
+```
+
+What this shows is where the file came from. It is that commit of Hazel, compiled by the OCaml toolchain in Hazel's lock file, and nothing else. It does not show that the code at that commit does what you want; for that, read it, or trust the people who wrote it.
+
 ## Limits
 
 - **Experimental.** No promise of stability yet; pin an exact version.

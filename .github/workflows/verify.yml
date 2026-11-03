@@ -1,0 +1,39 @@
+# Is the package's hazel-lib.js really Hazel? Builds the hazelgrove/hazel commit that
+# package.json names, on GitHub's runner, and compares (scripts/verify-build.sh). Anyone can
+# run it by hand (Actions, "Verify hazel-lib.js", Run workflow); it also runs on a push that
+# changes the file, the commit it names, or this check.
+name: Verify hazel-lib.js
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - hazel-lib.js
+      - package.json
+      - scripts/verify-build.sh
+      - .github/workflows/verify.yml
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: The hazelgrove/hazel commit the package names
+        id: named
+        run: |
+          curl -fsSL "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/package.json" > named.json
+          echo "commit=$(node -p "require('./named.json').hazel.commit")" >> "$GITHUB_OUTPUT"
+      # Hazel at the workspace root, as its toolchain action expects; this package beside it
+      - uses: actions/checkout@v4
+        with:
+          repository: hazelgrove/hazel
+          ref: ${{ steps.named.outputs.commit }}
+      - uses: actions/checkout@v4
+        with:
+          path: pkg
+      - uses: ./.github/actions/setup-hazel-toolchain
+      - name: Build hazel-lib.js from that commit, and compare
+        shell: bash
+        run: ./pkg/scripts/verify-build.sh . | tee verify.log
+      - name: Summary
+        if: always()
+        run: |
+          { echo '## Verify hazel-lib.js'; echo '```'; cat verify.log 2>/dev/null || echo 'no result'; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
