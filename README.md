@@ -1,4 +1,4 @@
-<p align="center"><img src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.3/hazelnut.svg" width="120" height="120" alt="Hazel's hazelnut logo"></p>
+<p align="center"><img src="https://cdn.jsdelivr.net/gh/hazelgrove/hazeljs@main/hazelnut.svg" width="120" height="120" alt="Hazel's hazelnut logo"></p>
 
 # hazeljs
 
