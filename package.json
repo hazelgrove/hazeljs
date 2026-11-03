@@ -1,6 +1,6 @@
 {
   "name": "hazeljs",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Hazel, the typed functional language with holes, as a JavaScript library: analyze and run Hazel programs from Node or a web page, and call their functions from JS. Experimental.",
   "keywords": [
     "hazel",
