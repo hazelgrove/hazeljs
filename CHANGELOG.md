@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- README: Errors, holes and unfinished code: Messed Up Dress Up's type error as an example, what `analyzeProgram` reports, how the game shows it, and running anyway. Limits: errors name a term, not a place; a stuck value is a debug printout.
 - README, Limits: no undo or redo in the library; the page that holds the text keeps its history.
 - README: "Is it really Hazel?": how to check that `hazel-lib.js` is what its commit of hazelgrove/hazel compiles to. `scripts/verify-build.sh` rebuilds it and compares, and the **Verify hazel-lib.js** workflow runs that on GitHub. Neither file is in the published package.
 

@@ -137,6 +137,79 @@ Each module sees the preamble and the modules before it, as `Common.greet`, and 
 
 Hazel remembers the texts of the last program it read, part by part, so calling again after one module changes reads only that module again.
 
+## Errors, holes and unfinished code
+
+Hazel reads the whole program before it runs any of it, and it reports what is wrong as data, not as an exception. An example from Messed Up Dress Up's trap room: a lever is a `Side`, `L` or `R`, and the room's rule passes a number instead.
+
+```js
+const result = Hazel.analyzeProgram({
+  preamble: "type Side = + L + R in",
+  modules: [
+    { name: "Common", text: "let flip = fun (s : Side) -> s" },
+    { name: "TrapRoom", text: "let answer = Common.flip(3)" },
+  ],
+  tail: "TrapRoom.answer",
+});
+```
+
+```js
+{
+  ok: false,
+  errors: [{
+    module: "TrapRoom",
+    message: "Error in term:\n  3\nNature of error: Expecting type Side but got inconsistent type Int",
+    id: "3d0f0000-0000-4000-b53b-3f45d4c660e0",
+  }],
+  holes: { Common: 0, TrapRoom: 0 }, programHoles: 0,
+  incomplete: { Common: 0, TrapRoom: 0 }, programIncomplete: 0,
+  // and ms
+}
+```
+
+A program can be not ready in three ways, and each is counted where it is:
+
+| What | Example | Where it shows |
+|---|---|---|
+| An error | `Common.flip(3)`: a number where a `Side` is wanted | `errors`, each with its module |
+| A hole: a part not written yet | `Common.flip(?)` | `holes: { TrapRoom: 1 }`, and no error |
+| Something unfinished: a bracket or keyword without its partner | `Common.flip(L` | `incomplete: { TrapRoom: 1 }` |
+
+A program with only text, read by `Hazel.analyze` or `Hazel.run`, reports its errors as strings, without a module:
+
+```js
+Hazel.analyze("let x : Int = true in x").errors;
+// ["Error in term:\n  true\nNature of error: Expecting type Int but got inconsistent type Bool"]
+```
+
+### Showing them
+
+Hazel's messages are written for Hazel's developers. Messed Up Dress Up says a type error the way a person reads it, with this function (its `scriptErrorText`, slightly shortened). Other messages pass through as they are:
+
+```js
+function errorText(message) {
+  const m = message.match(/^Error in term:\s*\n\s*([\s\S]*?)\nNature of error: Expecting type ([\s\S]*?) but got inconsistent type ([\s\S]*)$/);
+  if (!m) return message;
+  const a = t => (/^[AEIOU]/.test(t.trim()) ? "an " : "a ") + t.trim();
+  return `${m[1].trim()}: ${a(m[2])} is wanted here, but this is ${a(m[3])}`;
+}
+
+for (const e of result.errors) console.log(`${e.module ?? "the program"}: ${errorText(e.message)}`);
+// TrapRoom: 3: a Side is wanted here, but this is an Int
+```
+
+Two things to know when you show them:
+
+- **A sum type with no name is written out.** Had `Side` been defined in a module instead of the preamble, the message would say `L + R`. The game maps such types back to its own names.
+- **A name that is not there is a missing label.** `Common.flop(L)` gives `Nature of error: Label not found`, since a module's members are reached like a labeled tuple's.
+
+The game shows a room's errors in three places: under the room's box, by name, with ⚠️ and a count in its outline, and as a check entry in its event log, before anything runs.
+
+<img src="https://matthewhammer.org/kids-choice-games/dress-up/reports/017/pictures/06-type-error-box.webp" width="720" alt="The trap room's box in Messed Up Dress Up, with its type errors listed under its name.">
+
+### Running anyway
+
+`runProgram` and `run` evaluate around errors and holes, as Hazel always does, so `value` is there even when `ok` is false. But where an error or a hole stopped the evaluation, the value comes back as `{ hazel: "…" }`, a printout of the term it stopped at, and a page cannot act on that. Messed Up Dress Up keeps answering with its own JavaScript while a room's rule is not `ok`, and logs Hazel's answer beside it, so the game keeps working while the rule is fixed. For more, see the game's [Game Scripts Guide](https://matthewhammer.org/kids-choice-games/dress-up/reports/017/#ch8), section 8, on broken scripts.
+
 ## Prototype use case
 
 [Messed Up Dress Up](https://matthewhammer.org/kids-choice-games/dress-up/) is a dress-up and adventure game in plain JavaScript, made with two young players. It is the first Hazlet: five of its rooms hand their events to a rule, a function `on_event : (Globals, Event) -> Cmd`, which players can write in Hazel (or in JavaScript, or in Fumola) in the game's 📜 Scripting panel, while they play. The game builds one program from the panel's modules with `Hazel.runProgram`, then calls the room's rule with each event and runs the commands it returns.
@@ -187,6 +260,8 @@ What this shows is where the file came from. It is that commit of Hazel, compile
 - **One global.** The library puts one `Hazel` object on the global object.
 - **A console line for slow reads.** A text that only Hazel's slower, recovering parser can read (an unclosed bracket, such as `let x = (`) prints a `SLOW PARSE (...)` line to the console when it is read.
 - **No undo or redo.** The library holds no editor: it reads the text you give it and answers. Undo and redo are part of Hazel's editor, not of this library, so the page that holds the text keeps its history: keep the texts (or each module's text) it has had, and pass an older one again to go back. Going back costs what an edit does: the modules whose text changed since the last call are read again, and the others are not.
+- **Errors name a term, not a place.** An error's `id` is the id of its term in Hazel's syntax tree; the library gives no line and column for it yet.
+- **A stuck value is a debug printout.** Where an error or a hole stopped the evaluation, `{ hazel }` holds an OCaml printout of the term, not Hazel syntax.
 - **Deep programs need a bigger stack.** Hazel's analysis recurses deeply: in Node, a module of about 150 members overflows the default stack (`Stack overflow`). Raise it: `node --stack-size=32000 app.js`, with the shell's own limit raised to match (`ulimit -s 65536`), or Node crashes instead.
 
 ## About Hazel
