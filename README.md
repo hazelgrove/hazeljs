@@ -186,6 +186,7 @@ What this shows is where the file came from. It is that commit of Hazel, compile
 - **Synchronous.** Every call runs on the calling thread, so a long-running program blocks it.
 - **One global.** The library puts one `Hazel` object on the global object.
 - **A console line for slow reads.** A text that only Hazel's slower, recovering parser can read (an unclosed bracket, such as `let x = (`) prints a `SLOW PARSE (...)` line to the console when it is read.
+- **No undo or redo.** The library holds no editor: it reads the text you give it and answers. Undo and redo are part of Hazel's editor, not of this library, so the page that holds the text keeps its history: keep the texts (or each module's text) it has had, and pass an older one again to go back. Going back costs what an edit does: the modules whose text changed since the last call are read again, and the others are not.
 - **Deep programs need a bigger stack.** Hazel's analysis recurses deeply: in Node, a module of about 150 members overflows the default stack (`Stack overflow`). Raise it: `node --stack-size=32000 app.js`, with the shell's own limit raised to match (`ulimit -s 65536`), or Node crashes instead.
 
 ## About Hazel
