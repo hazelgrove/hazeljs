@@ -15,7 +15,7 @@ const double = Hazel.run("fun (x : Int) -> x * 2").value;
 double(21); // 42
 ```
 
-> **Experimental.** This is a prototype (0.0.x): the API may change in any release. It is built from the draft library in [hazelgrove/hazel#2711](https://github.com/hazelgrove/hazel/pull/2711) and [#2719](https://github.com/hazelgrove/hazel/pull/2719), at commit `0d66c36618` (`Hazel.build` names it).
+> **Experimental.** This is a prototype (0.0.x): the API may change in any release. It is built from the draft library in [hazelgrove/hazel#2711](https://github.com/hazelgrove/hazel/pull/2711) and [#2719](https://github.com/hazelgrove/hazel/pull/2719), at commit `1ba138ef28` (`Hazel.build` names it).
 
 ## Why
 
@@ -32,13 +32,13 @@ npm install hazeljs
 Or in a web page, from a CDN that serves npm packages:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.3/hazel-lib.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.4/hazel-lib.js"></script>
 <script>
   console.log(Hazel.run("1 + 2").value); // 3
 </script>
 ```
 
-The script defines a global `Hazel` (`window.Hazel`). The same file is at `https://unpkg.com/hazeljs@0.0.3/hazel-lib.js`.
+The script defines a global `Hazel` (`window.Hazel`). The same file is at `https://unpkg.com/hazeljs@0.0.4/hazel-lib.js`.
 
 ## Usage
 
@@ -137,7 +137,7 @@ Each module sees the preamble and the modules before it, as `Common.greet`, and 
 - `holes`: each module's holes, by name (`{ Common: 0, Room: 1 }`); `programHoles`, the preamble's and the tail's.
 - `incomplete`: each module's brackets and keywords left open (a `(` with no `)`, a `case` with no `end`) or closed with no opener; `programIncomplete`, the preamble's and the tail's.
 - `ok`: no errors, no holes and nothing incomplete. A function still being written can have holes and no errors, so act on `value` only when `ok`.
-- `ms`: meant to be how long the call took, in milliseconds. In 0.0.1 to 0.0.3 it reads 0 (a known bug); time the call yourself.
+- `ms`: how long the call took, in milliseconds. (In 0.0.1 to 0.0.3 it read 0, a bug fixed in 0.0.4.)
 
 Hazel remembers the texts of the last program it read, part by part, so calling again after one module changes reads only that module again.
 
@@ -236,7 +236,7 @@ The game's guide to its scripts, with more of these pictures: [Game Scripts Guid
 
 `hazel-lib.js` is 2.8 MB of compiled JavaScript, so reading it tells you little. What you can check is that it is exactly what Hazel's source compiles to, at a commit you can read.
 
-**It names its commit.** `Hazel.build` returns the hazelgrove/hazel commit it was built from, and the `hazel` field of `package.json` names the same commit, with its branch and pull request. For this release that is `0d66c36618ee709a60f91cf01fbf0b46121f2499`.
+**It names its commit.** `Hazel.build` returns the hazelgrove/hazel commit it was built from, and the `hazel` field of `package.json` names the same commit, with its branch and pull request. For this release that is `1ba138ef28e9efd7931ef1c2060582d7b03827c5`.
 
 **Rebuild it and compare.** With a clone of [hazelgrove/hazel](https://github.com/hazelgrove/hazel) and its toolchain set up (see its README), run
 
@@ -244,13 +244,13 @@ The game's guide to its scripts, with more of these pictures: [Game Scripts Guid
 scripts/verify-build.sh path/to/hazel
 ```
 
-It checks out that commit, builds `hazel-lib.js` the way Hazel's own Deploy workflow does (the release profile, with `GITHUB_SHA` set to the commit), and compares the two files. Every byte must match except one comment line, `//# buildInfo:`, where js_of_ocaml names its own version label (`5.9.1` from one install, `5.9.1+5.9.1` from Hazel's lock file). Without that line, this release's file has the SHA-256 `4695853925917b8dc8514a78c3adbd3140a2277d79ab2c27612ce1595e08e856`.
+It checks out that commit, builds `hazel-lib.js` the way Hazel's own Deploy workflow does (the release profile, with `GITHUB_SHA` set to the commit), and compares the two files. Every byte must match except one comment line, `//# buildInfo:`, where js_of_ocaml names its own version label (`5.9.1` from one install, `5.9.1+5.9.1` from Hazel's lock file). Without that line, this release's file has the SHA-256 `29f33a76f82c8a326b353a97d94dd9468f586e1c14bf210acecf8d66f9fb6fda`. Built on GitHub's machines, as this release's was, it matches with that line too.
 
 **How a release's file is made.** `scripts/build.sh path/to/hazel COMMIT` builds `hazel-lib.js` from that commit the same way and records the commit in `package.json`. The **Build hazel-lib.js** workflow runs it on GitHub's machines and pushes the result to a branch `build/<commit>`, so a release's file is built where anyone can see it.
 
 **Or let GitHub rebuild it.** This repository's **Verify hazel-lib.js** workflow runs the same script on GitHub's machines, from a fresh clone of Hazel. Anyone can run it from the Actions tab, and its runs are public.
 
-**Hazel's own CI built it too.** Hazel's Deploy workflow builds every commit pushed to hazelgrove/hazel. Its build of this commit ([run 39680368678](https://github.com/hazelgrove/hazel/actions/runs/39680368678)) gives the same hash without the buildInfo line. That build is served at `https://build.hazel.org/js-library-embed/hazel-lib.js` only until the branch gets a newer commit:
+**Hazel's own CI built it too.** Hazel's Deploy workflow builds every commit pushed to hazelgrove/hazel. Its build of this commit ([run 41715556155](https://github.com/hazelgrove/hazel/actions/runs/41715556155)) is this release's file, byte for byte. That build is served at `https://build.hazel.org/js-library-embed/hazel-lib.js` only until the branch gets a newer commit:
 
 ```sh
 curl -sL https://build.hazel.org/js-library-embed/hazel-lib.js | grep -v '^//# buildInfo:' | sha256sum

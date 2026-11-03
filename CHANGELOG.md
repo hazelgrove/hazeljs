@@ -1,7 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.0.4 (2026-11-03)
 
+`hazel-lib.js` from hazelgrove/hazel at `1ba138ef28` ([#2719](https://github.com/hazelgrove/hazel/pull/2719)), built on GitHub's machines by the **Build hazel-lib.js** workflow: the same file, byte for byte, as Hazel's own deploy of that commit. Since 0.0.3's `0d66c36618`, the library's one change:
+
+- **`ms` is measured.** `analyzeProgram` and `runProgram` say how long the call took; in 0.0.1 to 0.0.3 `ms` read 0, or a little below, because js_of_ocaml moved the first reading of the clock to after the call.
+
+Also, in the repository but not the package:
+
+- `bench/boundary.mjs` and the **Boundary benchmark** workflow: what a call into Hazel costs, in time and space, for several builds of `hazel-lib.js`.
 - `scripts/build.sh` builds `hazel-lib.js` from a hazelgrove/hazel commit and records it in `package.json`; the **Build hazel-lib.js** workflow runs it on GitHub's machines and pushes the result to a branch `build/<commit>`. Neither is in the published package.
 
 ## 0.0.3 (2026-11-03)
