@@ -2,6 +2,10 @@
 
 # hazeljs
 
+**Hazel edit boxes that extend ordinary JavaScript programs with custom behavior.**
+
+You bring the box, a text area or your own editor; hazeljs type-checks what is typed in it, says what is wrong and where, and runs it, even while it is unfinished.
+
 [Hazel](https://hazel.org), the typed functional programming language with holes, as a JavaScript library. Analyze and run Hazel programs from Node or a web page, and call the functions they define from JavaScript.
 
 ```js
