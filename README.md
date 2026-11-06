@@ -21,7 +21,7 @@ double(21); // 42
 
 Hazel type-checks and runs programs that are not finished: a program with holes or type errors still runs, around them. That makes it a good language for code a page lets people write and change while it runs: rules, scripts, exercises.
 
-We call a JavaScript program whose event handlers are Hazel functions a **Hazlet**: the page calls a Hazel function with each event and acts on what it returns. The first is a game, below under [Prototype use case](#prototype-use-case).
+We call a JavaScript program whose event handlers are Hazel functions a **Hazlet**: the page calls a Hazel function with each event and acts on what it returns. The first is a game, and the second a Petri net simulator; both are below, under [Examples](#examples).
 
 ## Install
 
@@ -214,7 +214,11 @@ The game shows a room's errors in three places: under the room's box, by name, w
 
 `runProgram` and `run` evaluate around errors and holes, as Hazel always does, so `value` is there even when `ok` is false. But where an error or a hole stopped the evaluation, the value comes back as `{ hazel: "…" }`, a printout of the term it stopped at, and a page cannot act on that. Messed Up Dress Up keeps answering with its own JavaScript while a room's rule is not `ok`, and logs Hazel's answer beside it, so the game keeps working while the rule is fixed. For more, see the game's [Game Scripts Guide](https://matthewhammer.org/kids-choice-games/dress-up/reports/017/#ch8), section 8, on broken scripts.
 
-## Prototype use case
+## Examples
+
+Two apps use `hazeljs` the same way: the app keeps its state and draws it, and on each event it calls a Hazel function, a rule written by its users, and acts out the commands the rule returns. While a rule has an error or a hole, the app's own JavaScript answers instead, so the app keeps working while its rules are edited.
+
+### Messed Up Dress Up, a game
 
 [Messed Up Dress Up](https://matthewhammer.org/kids-choice-games/dress-up/) is a dress-up and adventure game in plain JavaScript, made with two young players. It is the first Hazlet: five of its rooms hand their events to a rule, a function `on_event : (Globals, Event) -> Cmd`, which players can write in Hazel (or in JavaScript, or in Fumola) in the game's 📜 Scripting panel, while they play. The game builds one program from the panel's modules with `Hazel.runProgram`, then calls the room's rule with each event and runs the commands it returns.
 
@@ -227,6 +231,25 @@ Playing and reading at once: each event the room hands to Hazel, and Hazel's ans
 <img src="https://matthewhammer.org/kids-choice-games/dress-up/reports/017/pictures/05-log.webp" width="720" alt="The event log: calls of TrapRoom.on_event with Pull(L) and Pull(R) events, each with the event and the rule's answer as JSON, what the call changed (a lever from false to true), and how long the rule and the call took.">
 
 The game's guide to its scripts, with more of these pictures: [Game Scripts Guide](https://matthewhammer.org/kids-choice-games/dress-up/reports/017/).
+
+### A Petri net simulator
+
+[hazeljs-petri-example](https://github.com/matthewhammer/hazeljs-petri-example) is a small app whose Petri net runs in the page and whose firing rule is written in Hazel: two processes sharing one lock, a rule `on_event : (Net, Event) -> Cmd` that fires a transition when it can, and `Step`, which picks one of those that can with a random draw the page passes in. The rules are files (`rules/preamble.hz` for the vocabulary, `rules/Common.hz` and `rules/Rules.hz` for the modules) and the net is `net.json`, read both by the page and by a Node script (`npm run example`). The page builds one program from the modules with `Hazel.runProgram` after every edit, calls the rule with each event, and acts out the commands it returns. It is built as a second user of `hazeljs` would build one, to see what the game's way of doing it takes elsewhere, and to start from for other kinds of Petri nets (coloured ones, whose tokens carry data, among them).
+
+The net, with its event log: each event, which engine answered, and the answer acted out:
+
+<img src="https://raw.githubusercontent.com/matthewhammer/hazeljs-petri-example/main/pictures/net-and-log.jpg" width="720" alt="The app: the net of two processes and a lock, with Step and Reset buttons, the status saying the rules are ready, and the event log with one entry open: Fire(2), Hazel's answer, and the tokens it moved.">
+
+The handler, `Rules.on_event`, in Hazel's own editor, with go to definition between the rules' listings:
+
+<img src="https://raw.githubusercontent.com/matthewhammer/hazeljs-petri-example/main/pictures/rules.png" width="720" alt="The module Rules in Hazel's tile editor: fire_at picks a transition and fires it if it can; on_event handles Fire(i) and Step.">
+
+To run it: clone it, serve the folder (`python3 -m http.server`), and open it from `localhost`. Its site is planned ([its PLAN.md](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/PLAN.md)).
+
+### Reports
+
+- [Scripting a JavaScript App in Hazel](https://matthewhammer.org/hazel/reports/043/): how Messed Up Dress Up uses `hazeljs` for its scripts, the steps of building the Petri net example, and the example itself, live on the page, with what each call costs.
+- [Hazel Listings in an Article](https://matthewhammer.org/hazel/reports/044/): how a page can show its Hazel code in Hazel's own editor, with go to definition from one listing to another.
 
 ## Size and speed
 
