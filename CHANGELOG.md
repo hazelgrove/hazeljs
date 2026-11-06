@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.0.6 (2026-11-06)
+
+`hazel-lib.js` is 0.0.5's, unchanged: hazelgrove/hazel at `6c283c8a9f` ([#2719](https://github.com/hazelgrove/hazel/pull/2719)).
+
+`hazel-listings.js`:
+
+- **Long lines break to fit the listing, and again when its width changes** ([hazelgrove/hazeljs#1](https://github.com/hazelgrove/hazeljs/issues/1)). A line longer than its listing is laid out as a pretty-printer would, broken at the outermost places the code allows (before a case's `|`, after a `let`'s `in`, after `,`, after `->` and `=>`, before `then` and `else`, before `++`, ...), each piece indented 2 deeper; only spaces and line breaks change (a long comment becomes several), so the program means what it meant. The editor is sent that copy, and the page keeps its own text, so a wider listing gets its long lines back. It breaks again 300 ms after any change of a listing's width: the window, a divider, full screen. This is Messed Up Dress Up's way of laying out its script panel, as that game's `js/25-scripting.js` has it.
+- **The editor is sent the page's code font.** The font of each `<pre class="hazel">` goes to Hazel's editor with its size, so the listing's width is measured, in characters, in the font it is shown in.
+
+README:
+
+- **Listings in an article:** long lines break to fit.
+- **The Petri net example:** its net is Hazel too now (`rules/Main.hz`), editable on the page and drawn again after each edit.
+
 ## 0.0.5 (2026-11-06)
 
 `hazel-lib.js` from hazelgrove/hazel at `6c283c8a9f` ([#2719](https://github.com/hazelgrove/hazel/pull/2719)), built on GitHub's machines by the **Build hazel-lib.js** workflow: the same file, byte for byte, as Hazel's own deploy of that commit ([run 42296395095](https://github.com/hazelgrove/hazel/actions/runs/42296395095)). Since 0.0.4's `1ba138ef28`, the library's one change:

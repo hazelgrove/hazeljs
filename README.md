@@ -32,13 +32,13 @@ npm install hazeljs
 Or in a web page, from a CDN that serves npm packages:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.5/hazel-lib.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.6/hazel-lib.js"></script>
 <script>
   console.log(Hazel.run("1 + 2").value); // 3
 </script>
 ```
 
-The script defines a global `Hazel` (`window.Hazel`). The same file is at `https://unpkg.com/hazeljs@0.0.5/hazel-lib.js`.
+The script defines a global `Hazel` (`window.Hazel`). The same file is at `https://unpkg.com/hazeljs@0.0.6/hazel-lib.js`.
 
 ## Usage
 
@@ -236,11 +236,12 @@ For an article or a blog post, `hazel-listings.js` does all of that for each `<p
   | Circle(r) => 3.14159 *. r *. r
   | Rect(w, h) => w *. h
   end</pre>
-<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.5/hazel-listings.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.6/hazel-listings.js"></script>
 ```
 
 - **One program per name.** Listings with the same `data-program` are one program: the listing without `data-module` is its preamble, and each other listing is a module.
 - **Each listing becomes Hazel's editor.** You get go to definition across listings (Ctrl+click, ⌘-click, F12, or the right-click menu). Each error appears under the listing it is in. Until the editor starts, the page shows the text as it is.
+- **Long lines break to fit.** A line longer than its listing is broken as a pretty-printer would, at the outermost places the code allows (a case's arms, a let's body, a list's items), each piece indented; only spaces and line breaks change. The listing breaks again when its width changes (a resize, a divider, full screen), and a wider listing gets its long lines back. The page's own text is kept as written. Since 0.0.6 ([hazelgrove/hazeljs#1](https://github.com/hazelgrove/hazeljs/issues/1)); the editor is sent the font of the page's `<pre>`, so the width is measured in it.
 - **Without JavaScript, the page still reads.** The listings stay plain text.
 - **The page can follow edits.** `HazelListings.onChange(program, fn)` calls `fn` with the program after each edit, in the form `runProgram` takes.
 
@@ -270,7 +271,7 @@ The game's guide to its scripts, with more of these pictures: [Game Scripts Guid
 
 **▶ Try it at https://matthewhammer.org/hazeljs-petri-example/** · [source](https://github.com/matthewhammer/hazeljs-petri-example) · [versions](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/VERSIONS.md)
 
-[hazeljs-petri-example](https://github.com/matthewhammer/hazeljs-petri-example) is a small app whose Petri net runs in the page and whose firing rule is written in Hazel: two processes sharing one lock, a rule `on_event : (Net, Event) -> Cmd` that fires a transition when it can, and `Step`, which picks one of those that can with a random draw the page passes in. The rules are files ([`rules/preamble.hz`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/rules/preamble.hz) for the vocabulary, [`rules/Common.hz`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/rules/Common.hz) and [`rules/Rules.hz`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/rules/Rules.hz) for the modules) and the net is [`net.json`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/net.json), read both by the page and by a Node script (`npm run example`). The page builds one program from the modules with `Hazel.runProgram` after every edit, calls the rule with each event, and acts out the commands it returns ([`js/live.js`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/js/live.js)). It is built as a second user of `hazeljs` would build one, to see what the game's way of doing it takes elsewhere, and to start from for other kinds of Petri nets (coloured ones, whose tokens carry data, among them).
+[hazeljs-petri-example](https://github.com/matthewhammer/hazeljs-petri-example) is a small app whose Petri net runs in the page and whose firing rule is written in Hazel: two processes sharing one lock, a rule `on_event : (Net, Event) -> Cmd` that fires a transition when it can, and `Step`, which picks one of those that can with a random draw the page passes in. The rules are files ([`rules/preamble.hz`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/rules/preamble.hz) for the vocabulary, [`rules/Common.hz`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/rules/Common.hz) and [`rules/Rules.hz`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/rules/Rules.hz) for the modules), and so is the net: [`rules/Main.hz`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/rules/Main.hz) holds its places, transitions, starting marking and where each is drawn, and the handler the page calls. All of it is read both by the page and by a Node script (`npm run example`), and all of it is editable on the page, which draws the net again after each edit. The page builds one program from the modules with `Hazel.runProgram` after every edit, calls the rule with each event, and acts out the commands it returns ([`js/live.js`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/js/live.js)). It is built as a second user of `hazeljs` would build one, to see what the game's way of doing it takes elsewhere, and to start from for other kinds of Petri nets (coloured ones, whose tokens carry data, among them).
 
 The rules on the left, each module in Hazel's own editor (`hazel-listings.js`, above; the page carries its own copy), and the net on the right, with its buttons and its event log. An opened entry shows the event, Hazel's answer, and the tokens it moved:
 
