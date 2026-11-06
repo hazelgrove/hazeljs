@@ -2,7 +2,7 @@
 
 ## 0.0.5 (2026-11-06)
 
-`hazel-lib.js` from hazelgrove/hazel at `6c283c8a9f` ([#2719](https://github.com/hazelgrove/hazel/pull/2719)), built on GitHub's machines by the **Build hazel-lib.js** workflow. Since 0.0.4's `1ba138ef28`, the library's one change:
+`hazel-lib.js` from hazelgrove/hazel at `6c283c8a9f` ([#2719](https://github.com/hazelgrove/hazel/pull/2719)), built on GitHub's machines by the **Build hazel-lib.js** workflow: the same file, byte for byte, as Hazel's own deploy of that commit ([run 42296395095](https://github.com/hazelgrove/hazel/actions/runs/42296395095)). Since 0.0.4's `1ba138ef28`, the library's one change:
 
 - **An object's keys can be in any order.** A JavaScript object passed to a Hazel function meets the parameter's labeled tuple type by label. Before, it met it by position. With keys in another order than the type's fields, each field met another field's type, and a field whose type was not its own stayed stuck under it, so `p.x` on `{y: [1], x: 5}` for `p : (x = Int, y = [Int])` gave `{hazel: ...}` instead of `5`. Only fields of a list or tuple type showed it: with only numbers, every position wanted the same type. (Hazel's own programs never met it: Hazel puts a program's tuples in their types' order before it runs.)
 

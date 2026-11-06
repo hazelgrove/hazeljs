@@ -15,7 +15,7 @@ const double = Hazel.run("fun (x : Int) -> x * 2").value;
 double(21); // 42
 ```
 
-> **Experimental.** This is a prototype (0.0.x): the API may change in any release. It is built from the draft library in [hazelgrove/hazel#2711](https://github.com/hazelgrove/hazel/pull/2711) and [#2719](https://github.com/hazelgrove/hazel/pull/2719), at commit `1ba138ef28` (`Hazel.build` names it).
+> **Experimental.** This is a prototype (0.0.x): the API may change in any release. It is built from the draft library in [hazelgrove/hazel#2711](https://github.com/hazelgrove/hazel/pull/2711) and [#2719](https://github.com/hazelgrove/hazel/pull/2719), at commit `6c283c8a9f` (`Hazel.build` names it).
 
 ## Why
 
@@ -293,7 +293,7 @@ Try it at https://matthewhammer.org/hazeljs-petri-example/, or clone it, serve t
 
 `hazel-lib.js` is 2.8 MB of compiled JavaScript, so reading it tells you little. What you can check is that it is exactly what Hazel's source compiles to, at a commit you can read.
 
-**It names its commit.** `Hazel.build` returns the hazelgrove/hazel commit it was built from, and the `hazel` field of `package.json` names the same commit, with its branch and pull request. For this release that is `1ba138ef28e9efd7931ef1c2060582d7b03827c5`.
+**It names its commit.** `Hazel.build` returns the hazelgrove/hazel commit it was built from, and the `hazel` field of `package.json` names the same commit, with its branch and pull request. For this release that is `6c283c8a9f7b0d79450c1397c4a12a53f2c63b86`.
 
 **Rebuild it and compare.** With a clone of [hazelgrove/hazel](https://github.com/hazelgrove/hazel) and its toolchain set up (see its README), run
 
@@ -301,13 +301,13 @@ Try it at https://matthewhammer.org/hazeljs-petri-example/, or clone it, serve t
 scripts/verify-build.sh path/to/hazel
 ```
 
-It checks out that commit, builds `hazel-lib.js` the way Hazel's own Deploy workflow does (the release profile, with `GITHUB_SHA` set to the commit), and compares the two files. Every byte must match except one comment line, `//# buildInfo:`, where js_of_ocaml names its own version label (`5.9.1` from one install, `5.9.1+5.9.1` from Hazel's lock file). Without that line, this release's file has the SHA-256 `29f33a76f82c8a326b353a97d94dd9468f586e1c14bf210acecf8d66f9fb6fda`. Built on GitHub's machines, as this release's was, it matches with that line too.
+It checks out that commit, builds `hazel-lib.js` the way Hazel's own Deploy workflow does (the release profile, with `GITHUB_SHA` set to the commit), and compares the two files. Every byte must match except one comment line, `//# buildInfo:`, where js_of_ocaml names its own version label (`5.9.1` from one install, `5.9.1+5.9.1` from Hazel's lock file). Without that line, this release's file has the SHA-256 `526c0908278d821442e9af03a1faddda441596a5a849469303164f34c5c4a14b`. Built on GitHub's machines, as this release's was, it matches with that line too.
 
 **How a release's file is made.** `scripts/build.sh path/to/hazel COMMIT` builds `hazel-lib.js` from that commit the same way and records the commit in `package.json`. The **Build hazel-lib.js** workflow runs it on GitHub's machines and pushes the result to a branch `build/<commit>`, so a release's file is built where anyone can see it.
 
 **Or let GitHub rebuild it.** This repository's **Verify hazel-lib.js** workflow runs the same script on GitHub's machines, from a fresh clone of Hazel. Anyone can run it from the Actions tab, and its runs are public.
 
-**Hazel's own CI built it too.** Hazel's Deploy workflow builds every commit pushed to hazelgrove/hazel. Its build of this commit ([run 41715556155](https://github.com/hazelgrove/hazel/actions/runs/41715556155)) is this release's file, byte for byte. That build is served at `https://build.hazel.org/js-library-embed/hazel-lib.js` only until the branch gets a newer commit:
+**Hazel's own CI built it too.** Hazel's Deploy workflow builds every commit pushed to hazelgrove/hazel. Its build of this commit ([run 42296395095](https://github.com/hazelgrove/hazel/actions/runs/42296395095)) is this release's file, byte for byte. That build is served at `https://build.hazel.org/js-library-embed/hazel-lib.js` only until the branch gets a newer commit:
 
 ```sh
 curl -sL https://build.hazel.org/js-library-embed/hazel-lib.js | grep -v '^//# buildInfo:' | sha256sum
