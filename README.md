@@ -244,7 +244,7 @@ The handler, `Rules.on_event`, in Hazel's own editor, with go to definition betw
 
 <img src="https://raw.githubusercontent.com/matthewhammer/hazeljs-petri-example/main/pictures/rules.png" width="720" alt="The module Rules in Hazel's tile editor: fire_at picks a transition and fires it if it can; on_event handles Fire(i) and Step.">
 
-To run it: clone it, serve the folder (`python3 -m http.server`), and open it from `localhost`. Its site is planned ([its PLAN.md](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/PLAN.md)).
+Try it at https://matthewhammer.org/hazeljs-petri-example/, or clone it, serve the folder (`python3 -m http.server`) and open it from `localhost`. What comes next for it, in the game's style: [its PLAN.md](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/PLAN.md).
 
 ### Reports
 
