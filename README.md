@@ -21,7 +21,7 @@ double(21); // 42
 
 Hazel type-checks and runs programs that are not finished: a program with holes or type errors still runs, around them. That makes it a good language for code a page lets people write and change while it runs: rules, scripts, exercises.
 
-We call a JavaScript program whose event handlers are Hazel functions a **Hazlet**: the page calls a Hazel function with each event and acts on what it returns. The first is a game, and the second a Petri net simulator; both are below, under [Examples](#examples).
+We call a JavaScript program whose event handlers are Hazel functions a **Hazlet**: the page calls a Hazel function with each event and acts on what it returns. The first is a game, [Messed Up Dress Up](https://matthewhammer.org/kids-choice-games/dress-up/), and the second a [Petri net simulator](https://matthewhammer.org/hazeljs-petri-example/); both are below, under [Examples](#examples), with pictures.
 
 ## Install
 
@@ -268,17 +268,23 @@ The game's guide to its scripts, with more of these pictures: [Game Scripts Guid
 
 ### A Petri net simulator
 
-[hazeljs-petri-example](https://github.com/matthewhammer/hazeljs-petri-example) is a small app whose Petri net runs in the page and whose firing rule is written in Hazel: two processes sharing one lock, a rule `on_event : (Net, Event) -> Cmd` that fires a transition when it can, and `Step`, which picks one of those that can with a random draw the page passes in. The rules are files (`rules/preamble.hz` for the vocabulary, `rules/Common.hz` and `rules/Rules.hz` for the modules) and the net is `net.json`, read both by the page and by a Node script (`npm run example`). The page builds one program from the modules with `Hazel.runProgram` after every edit, calls the rule with each event, and acts out the commands it returns. It is built as a second user of `hazeljs` would build one, to see what the game's way of doing it takes elsewhere, and to start from for other kinds of Petri nets (coloured ones, whose tokens carry data, among them).
+**▶ Try it at https://matthewhammer.org/hazeljs-petri-example/** · [source](https://github.com/matthewhammer/hazeljs-petri-example) · [versions](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/VERSIONS.md)
 
-The net, with its event log: each event, which engine answered, and the answer acted out:
+[hazeljs-petri-example](https://github.com/matthewhammer/hazeljs-petri-example) is a small app whose Petri net runs in the page and whose firing rule is written in Hazel: two processes sharing one lock, a rule `on_event : (Net, Event) -> Cmd` that fires a transition when it can, and `Step`, which picks one of those that can with a random draw the page passes in. The rules are files ([`rules/preamble.hz`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/rules/preamble.hz) for the vocabulary, [`rules/Common.hz`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/rules/Common.hz) and [`rules/Rules.hz`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/rules/Rules.hz) for the modules) and the net is [`net.json`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/net.json), read both by the page and by a Node script (`npm run example`). The page builds one program from the modules with `Hazel.runProgram` after every edit, calls the rule with each event, and acts out the commands it returns ([`js/live.js`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/js/live.js)). It is built as a second user of `hazeljs` would build one, to see what the game's way of doing it takes elsewhere, and to start from for other kinds of Petri nets (coloured ones, whose tokens carry data, among them).
 
-<img src="https://raw.githubusercontent.com/matthewhammer/hazeljs-petri-example/main/pictures/net-and-log.jpg" width="720" alt="The app: the net of two processes and a lock, with Step and Reset buttons, the status saying the rules are ready, and the event log with one entry open: Fire(2), Hazel's answer, and the tokens it moved.">
+The rules on the left, each module in Hazel's own editor (`hazel-listings.js`, above; the page carries its own copy), and the net on the right, with its buttons and its event log. An opened entry shows the event, Hazel's answer, and the tokens it moved:
 
-The handler, `Rules.on_event`, in Hazel's own editor, with go to definition between the rules' listings:
+<img src="https://raw.githubusercontent.com/matthewhammer/hazeljs-petri-example/main/pictures/rules-and-net.jpg" width="720" alt="The app in two columns. On the left, the vocabulary and the module Common in Hazel's tile editor. On the right, the net of two processes and a lock, the Step, Reset and full screen buttons, the status saying the rules are ready, and the event log with one entry open: the event Step, Hazel's answer Say(&quot;leave1&quot;, Take(...)), and the tokens it moved.">
 
-<img src="https://raw.githubusercontent.com/matthewhammer/hazeljs-petri-example/main/pictures/rules.png" width="720" alt="The module Rules in Hazel's tile editor: fire_at picks a transition and fires it if it can; on_event handles Fire(i) and Step.">
+An error is shown under the listing it is in, in words. Here `++` joins a string to an Int. While the rules have an error or a hole, the page's own JavaScript answers each event, and the log says which engine answered (`JS`):
 
-Try it at https://matthewhammer.org/hazeljs-petri-example/, or clone it, serve the folder (`python3 -m http.server`) and open it from `localhost`. What comes next for it, in the game's style: [its PLAN.md](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/PLAN.md).
+<img src="https://raw.githubusercontent.com/matthewhammer/hazeljs-petri-example/main/pictures/error-under-its-rule.jpg" width="720" alt="The module Rules in Hazel's editor, with i outlined in &quot;there is no transition &quot; ++ i, and under the listing: i: a String is wanted here, but this is an Int. Beside it, the status says the rules are not ready, so the page's own JS answers events, and the log's two entries are marked JS.">
+
+**⛶ full screen** gives the whole app the screen, in two columns. Drag the divider between the columns to give the rules or the net more room, on the page as well as in full screen. You can also use the arrow keys on the divider, and a double-click puts it back:
+
+<img src="https://raw.githubusercontent.com/matthewhammer/hazeljs-petri-example/main/pictures/full-screen.jpg" width="720" alt="The app in full screen: the modules Common and Rules on the left, the divider, and on the right the net, its buttons with leave full screen, and an event log of six Hazel answers.">
+
+Try it at https://matthewhammer.org/hazeljs-petri-example/, or clone it, serve the folder (`python3 -m http.server`) and open it from `localhost`. What it does, version by version: [VERSIONS.md](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/VERSIONS.md). What comes next for it, in the game's style: [PLAN.md](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/PLAN.md).
 
 ### Reports
 

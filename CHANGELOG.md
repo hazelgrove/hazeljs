@@ -14,7 +14,7 @@ README:
 
 - **Hazel's own editor, beside your page:** how the apps show their Hazel in Hazel's tile editor, a frame per module, and what the page and the frames say to each other; listings in an article, with `hazel-listings.js`; where the frame works, and hosting your own copy elsewhere.
 - **Values:** an object's keys can be in any order.
-- **Examples:** Messed Up Dress Up and the Petri net simulator ([hazeljs-petri-example](https://github.com/matthewhammer/hazeljs-petri-example)), each with pictures, and the two reports.
+- **Examples:** Messed Up Dress Up and the Petri net simulator ([hazeljs-petri-example](https://github.com/matthewhammer/hazeljs-petri-example)), each with pictures, and the two reports. The Petri net's pictures show it as it is now: the rules beside the net, an error under its rule, and full screen. Its section also links the live site, its versions, and its rule files.
 - **Limits:** the editor is not in the package; a page starts one Hazel app per listing.
 
 ## 0.0.4 (2026-11-03)
