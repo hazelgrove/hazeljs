@@ -1,6 +1,6 @@
 {
   "name": "hazeljs",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Hazel edit boxes that extend ordinary JavaScript programs with custom behavior. Experimental.",
   "keywords": [
     "hazel",
@@ -40,6 +40,7 @@
     "index.mjs",
     "index.d.ts",
     "hazel-lib.js",
+    "hazel-listings.js",
     "hazelnut.svg",
     "CHANGELOG.md"
   ],

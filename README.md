@@ -32,13 +32,13 @@ npm install hazeljs
 Or in a web page, from a CDN that serves npm packages:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.4/hazel-lib.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.5/hazel-lib.js"></script>
 <script>
   console.log(Hazel.run("1 + 2").value); // 3
 </script>
 ```
 
-The script defines a global `Hazel` (`window.Hazel`). The same file is at `https://unpkg.com/hazeljs@0.0.4/hazel-lib.js`.
+The script defines a global `Hazel` (`window.Hazel`). The same file is at `https://unpkg.com/hazeljs@0.0.5/hazel-lib.js`.
 
 ## Usage
 
@@ -110,6 +110,8 @@ Values convert both ways: Hazel's results come back as these, and a JavaScript v
 | a function | a JavaScript function (one argument, or several as a tuple) |
 
 Anything else (a type, a hole) comes back as `{hazel: "<its printing>"}`.
+
+An object's keys can be in any order: its fields meet the labeled tuple's type by label, so `{y: [1], x: 5}` is `(x = 5, y = [1])` for a parameter `p : (x = Int, y = [Int])`. (Before 0.0.5, the keys had to be in the type's order when a field was a list or another tuple; a field out of order stayed stuck under another field's type.)
 
 A constructor from JavaScript has no type of its own, so Hazel checks it where a parameter is annotated (`fun e : Event -> ...`). An applied constructor is checked whole, tag and payload; one that does not fit the type stays stuck at the parameter, and the call returns `{hazel: ...}`.
 
@@ -214,6 +216,38 @@ The game shows a room's errors in three places: under the room's box, by name, w
 
 `runProgram` and `run` evaluate around errors and holes, as Hazel always does, so `value` is there even when `ok` is false. But where an error or a hole stopped the evaluation, the value comes back as `{ hazel: "…" }`, a printout of the term it stopped at, and a page cannot act on that. Messed Up Dress Up keeps answering with its own JavaScript while a room's rule is not `ok`, and logs Hazel's answer beside it, so the game keeps working while the rule is fixed. For more, see the game's [Game Scripts Guide](https://matthewhammer.org/kids-choice-games/dress-up/reports/017/#ch8), section 8, on broken scripts.
 
+## Hazel's own editor, beside your page
+
+The library holds no editor: you bring the box. The apps under [Examples](#examples) show their Hazel in Hazel's own tile editor instead of a text area. Each module is in a frame of Hazel's app, in its editable embed mode, from a build of Hazel's `embed-editable` branch ([hazelgrove/hazel#2814](https://github.com/hazelgrove/hazel/pull/2814)) at `https://build.hazel.org/embed-editable/index.html#embed`. The page and its frames talk by `postMessage`:
+
+- The page sends a frame the whole program (`{type: "set", preamble, modules, tail}`) and the module it shows (`{type: "focus", module}`).
+- The frame sends each edit's text (`{type: "edit", text}`), the program's errors and holes, by module (`{type: "status", ...}`), and a go to definition it cannot answer itself (`{type: "goto", name}`), for a name defined in another module.
+
+After each edit, the page sends the new program to the other frames and builds it again with `runProgram`. The protocol in full is in Hazel's [docs/hazel-as-a-js-library.md](https://github.com/hazelgrove/hazel/blob/embed-editable/docs/hazel-as-a-js-library.md), on that branch.
+
+### Listings in an article
+
+For an article or a blog post, `hazel-listings.js` does all of that for each `<pre class="hazel">` on the page. It has been in the package since 0.0.5:
+
+```html
+<pre class="hazel" data-program="shapes">type Shape = + Circle(Float) + Rect(Float, Float) in</pre>
+<pre class="hazel" data-program="shapes" data-module="Geometry">let area = fun s : Shape ->
+  case s
+  | Circle(r) => 3.14159 *. r *. r
+  | Rect(w, h) => w *. h
+  end</pre>
+<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.5/hazel-listings.js"></script>
+```
+
+- **One program per name.** Listings with the same `data-program` are one program: the listing without `data-module` is its preamble, and each other listing is a module.
+- **Each listing becomes Hazel's editor.** You get go to definition across listings (Ctrl+click, ⌘-click, F12, or the right-click menu). Each error appears under the listing it is in. Until the editor starts, the page shows the text as it is.
+- **Without JavaScript, the page still reads.** The listings stay plain text.
+- **The page can follow edits.** `HazelListings.onChange(program, fn)` calls `fn` with the program after each edit, in the form `runProgram` takes.
+
+[Hazel Listings in an Article](https://matthewhammer.org/hazel/reports/044/) is the guide, and it is itself such a page.
+
+**Where the frame works.** Hazel's frame takes messages only from pages on matthewhammer.org, from `localhost` (any port), and from its own site. Elsewhere, serve a copy of Hazel's editor from your own site, and point the script at it: `<script src=".../hazel-listings.js" data-frame="/hazel/index.html#embed">`. The guide's section [Your own site](https://matthewhammer.org/hazel/reports/044/#host) has the steps.
+
 ## Examples
 
 Two apps use `hazeljs` the same way: the app keeps its state and draws it, and on each event it calls a Hazel function, a rule written by its users, and acts out the commands the rule returns. While a rule has an error or a hole, the app's own JavaScript answers instead, so the app keeps working while its rules are edited.
@@ -289,6 +323,8 @@ What this shows is where the file came from. It is that commit of Hazel, compile
 - **One global.** The library puts one `Hazel` object on the global object.
 - **A console line for slow reads.** A text that only Hazel's slower, recovering parser can read (an unclosed bracket, such as `let x = (`) prints a `SLOW PARSE (...)` line to the console when it is read.
 - **No undo or redo.** The library holds no editor: it reads the text you give it and answers. Undo and redo are part of Hazel's editor, not of this library, so the page that holds the text keeps its history: keep the texts (or each module's text) it has had, and pass an older one again to go back. Going back costs what an edit does: the modules whose text changed since the last call are read again, and the others are not.
+- **The editor is not in the package.** Hazel's tile editor comes from a branch build of Hazel's app, in a frame ([above](#hazels-own-editor-beside-your-page)), and takes messages only from the sites in its list, or from a copy served beside the page.
+- **One app per listing.** Each listing's frame starts a whole Hazel app, one after another, so a page with many listings takes a while to start them all.
 - **Errors name a term, not a place.** An error's `id` is the id of its term in Hazel's syntax tree; the library gives no line and column for it yet.
 - **A stuck value is a debug printout.** Where an error or a hole stopped the evaluation, `{ hazel }` holds an OCaml printout of the term, not Hazel syntax.
 - **Deep programs need a bigger stack.** Hazel's analysis recurses deeply: in Node, a module of about 150 members overflows the default stack (`Stack overflow`). Raise it: `node --stack-size=32000 app.js`, with the shell's own limit raised to match (`ulimit -s 65536`), or Node crashes instead.

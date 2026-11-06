@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.0.5 (2026-11-06)
+
+`hazel-lib.js` from hazelgrove/hazel at `6c283c8a9f` ([#2719](https://github.com/hazelgrove/hazel/pull/2719)), built on GitHub's machines by the **Build hazel-lib.js** workflow. Since 0.0.4's `1ba138ef28`, the library's one change:
+
+- **An object's keys can be in any order.** A JavaScript object passed to a Hazel function meets the parameter's labeled tuple type by label. Before, it met it by position. With keys in another order than the type's fields, each field met another field's type, and a field whose type was not its own stayed stuck under it, so `p.x` on `{y: [1], x: 5}` for `p : (x = Int, y = [Int])` gave `{hazel: ...}` instead of `5`. Only fields of a list or tuple type showed it: with only numbers, every position wanted the same type. (Hazel's own programs never met it: Hazel puts a program's tuples in their types' order before it runs.)
+
+New in the package:
+
+- **`hazel-listings.js`**, the script that turns each `<pre class="hazel">` on a page into Hazel's own editor, with go to definition from one listing to another and each error under the listing it is in. It is the script [Hazel Listings in an Article](https://matthewhammer.org/hazel/reports/044/) describes, and the one that article and [Scripting a JavaScript App in Hazel](https://matthewhammer.org/hazel/reports/043/) use. From a CDN: `https://cdn.jsdelivr.net/npm/hazeljs@0.0.5/hazel-listings.js`. It brings default styles of its own, with no weight, so a page needs no stylesheet for it and can still style it.
+
+README:
+
+- **Hazel's own editor, beside your page:** how the apps show their Hazel in Hazel's tile editor, a frame per module, and what the page and the frames say to each other; listings in an article, with `hazel-listings.js`; where the frame works, and hosting your own copy elsewhere.
+- **Values:** an object's keys can be in any order.
+- **Examples:** Messed Up Dress Up and the Petri net simulator ([hazeljs-petri-example](https://github.com/matthewhammer/hazeljs-petri-example)), each with pictures, and the two reports.
+- **Limits:** the editor is not in the package; a page starts one Hazel app per listing.
+
 ## 0.0.4 (2026-11-03)
 
 `hazel-lib.js` from hazelgrove/hazel at `1ba138ef28` ([#2719](https://github.com/hazelgrove/hazel/pull/2719)), built on GitHub's machines by the **Build hazel-lib.js** workflow: the same file, byte for byte, as Hazel's own deploy of that commit. Since 0.0.3's `0d66c36618`, the library's one change:
