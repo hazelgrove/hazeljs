@@ -48,7 +48,7 @@
     "node": ">=18"
   },
   "hazel": {
-    "commit": "6c283c8a9f7b0d79450c1397c4a12a53f2c63b86",
+    "commit": "2ab33ebd90ffdfe2c1cdfd5cd01ce7133c597e2f",
     "branch": "js-library-embed",
     "pr": "https://github.com/hazelgrove/hazel/pull/2719"
   }
