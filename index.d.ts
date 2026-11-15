@@ -8,6 +8,10 @@
  * another tuple `(1, true)` as an array; a constructor `A` as `{tag: "A"}`
  * and `B(3)` as `{tag: "B", value: 3}`; a function as a JS function.
  * Anything else (a type, a hole) comes back as `{hazel: "<its printing>"}`.
+ * Going in, a value is read by the type the Hazel function declares for its
+ * parameter: an array is a tuple where it wants a tuple, a list where it
+ * wants a list (with no type declared, a list), and a whole number is a
+ * `Float` where it wants a `Float` (since 0.0.7).
  */
 export type HazelValue =
   | number

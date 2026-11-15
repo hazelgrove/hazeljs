@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.0.7 (2026-11-15)
+
+`hazel-lib.js` from hazelgrove/hazel at `2ab33ebd90` ([#2719](https://github.com/hazelgrove/hazel/pull/2719)), built on GitHub's machines by the **Build hazel-lib.js** workflow ([run 43752808750](https://github.com/hazelgrove/hazeljs/actions/runs/43752808750)): the same file, byte for byte, as Hazel's own deploy of that commit ([run 43750481255](https://github.com/hazelgrove/hazel/actions/runs/43750481255)), SHA-256 `14700f3486537d5e27ef3aef8938641a38fc51b5092f1e3f6adbd2a750a4d948`. Since 0.0.5's `6c283c8a9f`, the library's one change:
+
+- **A JavaScript value goes in by the type the function declares.** An array is a tuple where the parameter's type wants a tuple, and a list where it wants a list. Before, every array was a list, and a list met with a tuple type stays stuck. So `{tag: "Two", value: [3, true]}` never matched `Two(m, t)`, and a function of a pair called with one array `[3, true]` returned `{hazel: ...}` (called with two arguments, `f(3, true)`, it worked). Found writing [hazeljs-oracles](https://github.com/matthewhammer/hazeljs-oracles)' Tarot, whose year-ahead spread passes a labeled tuple instead. The type is read all the way down: a constructor's value by its own type in the sum, a labeled tuple's fields by theirs, a recursive type's own name as the whole type again (a command tree sent back in from JavaScript), and a number as the number type asks. A whole number where a `Float` is expected, `2` for `fun x : Float -> ...`, was an `Int` and stuck there; it is a `Float` now. The parameter's type is its annotation (`fun s : S -> ...`, `fun (m, t) : (Int, Bool) -> ...`) or the binding's (`let f : A -> B = fun x -> ...`); with neither, a value goes in as before.
+
+`hazel-listings.js` is 0.0.6's, unchanged.
+
+README:
+
+- **Values:** a value going in is read by the declared type.
+
 ## 0.0.6 (2026-11-06)
 
 `hazel-lib.js` is 0.0.5's, unchanged: hazelgrove/hazel at `6c283c8a9f` ([#2719](https://github.com/hazelgrove/hazel/pull/2719)).

@@ -32,7 +32,7 @@ npm install hazeljs
 Or in a web page, from a CDN that serves npm packages:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.6/hazel-lib.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.7/hazel-lib.js"></script>
 <script>
   console.log(Hazel.run("1 + 2").value); // 3
 </script>
@@ -112,6 +112,8 @@ Values convert both ways: Hazel's results come back as these, and a JavaScript v
 Anything else (a type, a hole) comes back as `{hazel: "<its printing>"}`.
 
 An object's keys can be in any order: its fields meet the labeled tuple's type by label, so `{y: [1], x: 5}` is `(x = 5, y = [1])` for a parameter `p : (x = Int, y = [Int])`. (Before 0.0.5, the keys had to be in the type's order when a field was a list or another tuple; a field out of order stayed stuck under another field's type.)
+
+A value going into a Hazel function is read by the type the function declares for its parameter: its annotation (`fun s : S -> ...`, `fun (m, t) : (Int, Bool) -> ...`), or the binding's (`let f : A -> B = fun x -> ...`). An array is a tuple where the type wants a tuple and a list where it wants a list, so for `type S = + Two(Int, Bool) + One(Int)`, `{tag: "Two", value: [3, true]}` is `Two(3, true)`, and `[3, true]` given to a function of a pair is the pair. A constructor's value is read by its own type, a recursive type's too, so a command tree that came out of Hazel can go back in; and a whole number where a `Float` is expected is a `Float`. With no type declared, an array is a list and a whole number an `Int`, so declare the parameter's type where a tuple or a `Float` comes from JavaScript. (Before 0.0.7, an array was always a list, and a tuple from JavaScript, alone or in a constructor, stayed stuck.)
 
 A constructor from JavaScript has no type of its own, so Hazel checks it where a parameter is annotated (`fun e : Event -> ...`). An applied constructor is checked whole, tag and payload; one that does not fit the type stays stuck at the parameter, and the call returns `{hazel: ...}`.
 
@@ -236,7 +238,7 @@ For an article or a blog post, `hazel-listings.js` does all of that for each `<p
   | Circle(r) => 3.14159 *. r *. r
   | Rect(w, h) => w *. h
   end</pre>
-<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.6/hazel-listings.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.7/hazel-listings.js"></script>
 ```
 
 - **One program per name.** Listings with the same `data-program` are one program: the listing without `data-module` is its preamble, and each other listing is a module.
