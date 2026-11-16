@@ -246,6 +246,7 @@ For an article or a blog post, `hazel-listings.js` does all of that for each `<p
 - **Long lines break to fit.** A line longer than its listing is broken as a pretty-printer would, at the outermost places the code allows (a case's arms, a let's body, a list's items), each piece indented; only spaces and line breaks change. The listing breaks again when its width changes (a resize, a divider, full screen), and a wider listing gets its long lines back. The page's own text is kept as written. Since 0.0.6 ([hazelgrove/hazeljs#1](https://github.com/hazelgrove/hazeljs/issues/1)); the editor is sent the font of the page's `<pre>`, so the width is measured in it.
 - **Without JavaScript, the page still reads.** The listings stay plain text.
 - **The page can follow edits.** `HazelListings.onChange(program, fn)` calls `fn` with the program after each edit, in the form `runProgram` takes.
+- **Or the editor on request.** Set `window.HazelListingsOptions = { start: "request" }` before the script loads, or put `data-start="request"` on its tag, and each listing stays text, with an **Open in Hazel's editor** button that starts the editor there. Each editor is a whole Hazel app, so on a phone this matters: see [On older or slower devices](#on-older-or-slower-devices). Since 0.0.7.
 
 [Hazel Listings in an Article](https://matthewhammer.org/hazel/reports/044/) is the guide, and it is itself such a page.
 
@@ -298,6 +299,18 @@ Try it at https://matthewhammer.org/hazeljs-petri-example/, or clone it, serve t
 
 `hazel-lib.js` is about 2.8 MB, 640 KB gzipped. Measured in Node 22 on a laptop: `require("hazeljs")` takes about 170 ms, and running a small program about 30 ms. A module of 100 short members takes about 110 ms to analyze, and one of 400 about 2.3 s; after an edit, only the modules whose text changed are read again.
 
+## On older or slower devices
+
+An older phone runs the same JavaScript several times slower than a laptop. These lessons come from [hazeljs-oracles](https://github.com/matthewhammer/hazeljs-oracles) (an I Ching and a Tarot whose rules are Hazel), which were painfully slow on an older Android phone in Firefox, to draw each card or line and on each key press. The numbers are from a laptop:
+
+- **Load the library after the page.** `hazel-lib.js` is about 2.8 MB. Load it `async`, once the page has drawn, and let the page's own JavaScript answer until Hazel is ready, as the examples do.
+- **Build once.** `runProgram` (reading, analyzing and preparing the program) is the costly step: 0.5 to 0.6 s for each oracle's few hundred lines, several seconds on an older phone. Build when the page loads and after an edit to the program (wait for a pause in the typing), and never on a key press elsewhere on the page. Calling the functions it returns is what to do often.
+- **Declare each function's whole type,** what it returns as well as what it takes: `let take : ([Card], Int) -> (Card, [Card]) = fun (cs, k) -> ...`. Hazel checks a value against a result type left undeclared while the program runs; the Tarot's deal got 3.7 times faster with every type declared.
+- **Keep calls few and large.** Every call is interpreted: a cast took 0.4 to 1.2 ms, a ten-card deal about 50 ms. Make one call for a user's action, not one for each thing drawn.
+- **Open Hazel's editor only when asked.** Each listing's editor is a whole Hazel app, about 7 MB of JavaScript and some 50 MB of memory. Five on one page made the older phone slow at everything, key presses included (Firefox on Android may run the frames on the page's own thread). Use the listings' [on-request mode](#listings-in-an-article).
+- **Measure on the device.** Each oracle's ⚙️ Advanced has a speed measurement: the same work on any device, and one line to paste and compare ([`shared/advanced.js`](https://github.com/matthewhammer/hazeljs-oracles/blob/main/shared/advanced.js)).
+- **Later: compiled ahead of time.** hazel-jit, a prototype compiler from Hazel to JavaScript (not part of this package), could compile an app's Hazel when its site is built, so a page would load neither the library nor the build; [report 54](https://matthewhammer.org/hazel/reports/054/#ahead) has the plan.
+
 ## Is it really Hazel?
 
 `hazel-lib.js` is 2.8 MB of compiled JavaScript, so reading it tells you little. What you can check is that it is exactly what Hazel's source compiles to, at a commit you can read.
@@ -333,7 +346,7 @@ What this shows is where the file came from. It is that commit of Hazel, compile
 - **A console line for slow reads.** A text that only Hazel's slower, recovering parser can read (an unclosed bracket, such as `let x = (`) prints a `SLOW PARSE (...)` line to the console when it is read.
 - **No undo or redo.** The library holds no editor: it reads the text you give it and answers. Undo and redo are part of Hazel's editor, not of this library, so the page that holds the text keeps its history: keep the texts (or each module's text) it has had, and pass an older one again to go back. Going back costs what an edit does: the modules whose text changed since the last call are read again, and the others are not.
 - **The editor is not in the package.** Hazel's tile editor comes from a branch build of Hazel's app, in a frame ([above](#hazels-own-editor-beside-your-page)), and takes messages only from the sites in its list, or from a copy served beside the page.
-- **One app per listing.** Each listing's frame starts a whole Hazel app, one after another, so a page with many listings takes a while to start them all.
+- **One app per listing.** Each listing's frame starts a whole Hazel app, one after another, so a page with many listings takes a while to start them all, and an older phone may not cope; the [on-request mode](#listings-in-an-article) starts each only when asked.
 - **Errors name a term, not a place.** An error's `id` is the id of its term in Hazel's syntax tree; the library gives no line and column for it yet.
 - **A stuck value is a debug printout.** Where an error or a hole stopped the evaluation, `{ hazel }` holds an OCaml printout of the term, not Hazel syntax.
 - **Deep programs need a bigger stack.** Hazel's analysis recurses deeply: in Node, a module of about 150 members overflows the default stack (`Stack overflow`). Raise it: `node --stack-size=32000 app.js`, with the shell's own limit raised to match (`ulimit -s 65536`), or Node crashes instead.

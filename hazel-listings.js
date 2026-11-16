@@ -13,6 +13,12 @@
 // that frame to reveal it, then scrolls to its caret. An edit in a listing reaches the other listings of its program, and
 // HazelListings.onChange(program, fn) tells the page.
 //
+// On request (Matthew, 2026-11-16, after the oracles were painfully slow on an older Android phone: "only reveal the Hazel
+// edit boxes when asked to"): with window.HazelListingsOptions = { start: "request" } set before this script loads, or
+// data-start="request" on its tag, a listing stays its text, with a button that opens it in Hazel's editor. Each frame is a
+// whole Hazel app, about 7 MB of JavaScript and some 50 MB of memory, so five of them unasked are too much for an older
+// phone, and Firefox on Android may run them on the page's own thread, where their work delays every key press.
+//
 // Limits, today: the frame comes from a branch build of Hazel (embed-editable) and takes messages only from its own origin and
 // the sites in its list (matthewhammer.org, localhost), so another site hosts its own copy (data-frame, above) or asks to be
 // added to the list; a go to definition
@@ -27,6 +33,7 @@
   const FRAME = new URL((ME && ME.dataset.frame) || "https://build.hazel.org/embed-editable/index.html#embed", location.href).href;
   const ORIGIN = new URL(FRAME).origin;
   const WAIT_MS = 45000;
+  const ON_REQUEST = ((window.HazelListingsOptions || {}).start || (ME && ME.dataset.start)) === "request";
   const programs = new Map();      // name -> {name, preamble: listing|null, modules: [listing], tail, listeners: []}
   const listings = [];             // in document order
   const queue = [];                // listings waiting for their frame, made one at a time
@@ -190,6 +197,13 @@
     making = L;
     L.timer = setTimeout(() => { if (!L.ready) fail(L, "Hazel's editor did not start"); }, WAIT_MS);
   }
+  // (on request) this listing's editor, before any other waiting
+  function request(L) {
+    const b = L.holder.querySelector(".hazel-listing-open"); if (b) b.remove();
+    if (L.frame || L.failed) return;
+    const i = queue.indexOf(L); if (i >= 0) queue.splice(i, 1);
+    queue.unshift(L); pump();
+  }
   function pump() {
     if (making && !making.ready && !making.failed) return;
     making = null;
@@ -227,7 +241,7 @@
   }
   function reveal(L, name) {
     if (name === null) { L.holder.scrollIntoView({ block: "start", behavior: "smooth" }); return; }   // (a module itself: its listing)
-    if (!L.ready) { L.reveal = name; if (!L.frame) { const i = queue.indexOf(L); if (i >= 0) queue.splice(i, 1); queue.unshift(L); pump(); } return; }
+    if (!L.ready) { L.reveal = name; if (!L.frame) request(L); return; }
     L.holder.scrollIntoView({ block: "nearest" });
     post(L, { type: "reveal", name });
   }
@@ -342,7 +356,14 @@
       L.original = L.text;
       if (L.module) P.modules.push(L); else P.preamble = L;
       listings.push(L);
-      queue.push(L);
+      if (ON_REQUEST) {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "hazel-listing-open";
+        b.textContent = "Open in Hazel's editor";
+        b.title = "Loads Hazel's editor for this listing: about 7 MB, a few seconds on a laptop, longer on a phone";
+        b.addEventListener("click", () => request(L));
+        holder.prepend(b);
+      } else queue.push(L);
     }
     if (!listings.length) return;
     // (a page needs no stylesheet of its own for the listings: these defaults, the text hidden once the editor shows, have no
@@ -354,7 +375,8 @@
       st.textContent = ':where(.hazel-listing[data-state="loading"], .hazel-listing[data-state="tiles"]) > :where(pre.hazel) { display: none; }\n'
         + ":where(.hazel-listing-frame) { border: 0; }\n"
         + ":where(.hazel-listing-status) { margin: 4px 0 0; padding-left: 1.2em; color: #b45309; }\n"
-        + ":where(.hazel-listing-status[hidden]) { display: none; }\n";
+        + ":where(.hazel-listing-status[hidden]) { display: none; }\n"
+        + ":where(.hazel-listing-open) { display: block; margin: 0 0 6px auto; }\n";
       document.head.prepend(st);
     }
     window.addEventListener("message", onMessage);
@@ -368,6 +390,7 @@
     new MutationObserver(again).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     if (window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener("change", again);
     // (polled, not an IntersectionObserver: in a page in the background those never called back)
+    if (ON_REQUEST) return;   // (nothing starts by itself: each listing's button)
     let started = false;
     const near = () => listings.some(L => { const r = L.holder.getBoundingClientRect(); return r.top < innerHeight + 800 && r.bottom > -800; });
     const check = () => { if (!started && near()) { started = true; clearInterval(poll); removeEventListener("scroll", check); pump(); } };

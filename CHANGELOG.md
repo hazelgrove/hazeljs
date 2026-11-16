@@ -6,11 +6,14 @@
 
 - **A JavaScript value goes in by the type the function declares.** An array is a tuple where the parameter's type wants a tuple, and a list where it wants a list. Before, every array was a list, and a list met with a tuple type stays stuck. So `{tag: "Two", value: [3, true]}` never matched `Two(m, t)`, and a function of a pair called with one array `[3, true]` returned `{hazel: ...}` (called with two arguments, `f(3, true)`, it worked). Found writing [hazeljs-oracles](https://github.com/matthewhammer/hazeljs-oracles)' Tarot, whose year-ahead spread passes a labeled tuple instead. The type is read all the way down: a constructor's value by its own type in the sum, a labeled tuple's fields by theirs, a recursive type's own name as the whole type again (a command tree sent back in from JavaScript), and a number as the number type asks. A whole number where a `Float` is expected, `2` for `fun x : Float -> ...`, was an `Int` and stuck there; it is a `Float` now. The parameter's type is its annotation (`fun s : S -> ...`, `fun (m, t) : (Int, Bool) -> ...`) or the binding's (`let f : A -> B = fun x -> ...`); with neither, a value goes in as before.
 
-`hazel-listings.js` is 0.0.6's, unchanged.
+`hazel-listings.js`:
+
+- **Hazel's editor on request** (2026-11-16): with `window.HazelListingsOptions = { start: "request" }` set before the script loads, or `data-start="request"` on its tag, each listing stays text, with an **Open in Hazel's editor** button that starts the editor there (and a go to definition into a listing starts its editor). Each editor is a whole Hazel app, about 7 MB of JavaScript and some 50 MB of memory; [hazeljs-oracles](https://github.com/matthewhammer/hazeljs-oracles)' pages opened five and four of them as they loaded, and were painfully slow on an older Android phone. Without the option, the listings start as before.
 
 README:
 
 - **Values:** a value going in is read by the declared type.
+- **On older or slower devices:** what makes a hazeljs page slow on an older phone, and what to do: the library loaded after the page, one build, whole types declared, few and large calls, the editor on request, a measurement on the device.
 
 ## 0.0.6 (2026-11-06)
 
