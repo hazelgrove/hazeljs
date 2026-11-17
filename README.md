@@ -32,7 +32,7 @@ npm install hazeljs
 Or in a web page, from a CDN that serves npm packages:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.7/hazel-lib.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.8/hazel-lib.js"></script>
 <script>
   console.log(Hazel.run("1 + 2").value); // 3
 </script>
@@ -238,7 +238,7 @@ For an article or a blog post, `hazel-listings.js` does all of that for each `<p
   | Circle(r) => 3.14159 *. r *. r
   | Rect(w, h) => w *. h
   end</pre>
-<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.7/hazel-listings.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.8/hazel-listings.js"></script>
 ```
 
 - **One program per name.** Listings with the same `data-program` are one program: the listing without `data-module` is its preamble, and each other listing is a module.
@@ -246,9 +246,9 @@ For an article or a blog post, `hazel-listings.js` does all of that for each `<p
 - **Long lines break to fit.** A line longer than its listing is broken as a pretty-printer would, at the outermost places the code allows (a case's arms, a let's body, a list's items), each piece indented; only spaces and line breaks change. The listing breaks again when its width changes (a resize, a divider, full screen), and a wider listing gets its long lines back. The page's own text is kept as written. Since 0.0.6 ([hazelgrove/hazeljs#1](https://github.com/hazelgrove/hazeljs/issues/1)); the editor is sent the font of the page's `<pre>`, so the width is measured in it.
 - **Without JavaScript, the page still reads.** The listings stay plain text.
 - **The page can follow edits.** `HazelListings.onChange(program, fn)` calls `fn` with the program after each edit, in the form `runProgram` takes.
-- **One button: text or Hazel's editor.** A single button, before the first listing, switches every listing on the page between highlighted text and Hazel's editor (**Edit in Hazel**, **Show as text**). Back to text shows each listing as it now is, edits and all, and the editors stay loaded behind it, so switching again is quick. Put the button elsewhere with `HazelListingsOptions.toggle` (an element or a selector), or leave it out (`toggle: false`) and call `HazelListings.view("text")` or `HazelListings.view("tiles")` from your own control; `HazelListings.view()` says which is showing. Unreleased.
-- **The text is highlighted.** Keywords, types and constructors, strings, numbers and comments, near the colours Hazel's editor gives them, in light and dark. The colours are CSS variables a page can set: `--hazel-type`, `--hazel-string`, `--hazel-number`, `--hazel-comment`. Unreleased.
-- **Text first, the editor when asked.** Set `window.HazelListingsOptions = { start: "request" }` before the script loads, or put `data-start="request"` on its tag, and the listings start as text until the button opens the editors. Each editor is a whole Hazel app, so on a phone this matters: see [On older or slower devices](#on-older-or-slower-devices). Without it, the editors start once the first listing is near the screen. Since 0.0.7 (in 0.0.7, a button on each listing).
+- **One button: text or Hazel's editor.** A single button, before the first listing, switches every listing on the page between highlighted text and Hazel's editor (**Edit in Hazel**, **Show as text**). Back to text shows each listing as it now is, edits and all, and the editors stay loaded behind it, so switching again is quick. Put the button elsewhere with `HazelListingsOptions.toggle` (an element or a selector), or leave it out (`toggle: false`) and call `HazelListings.view("text")` or `HazelListings.view("tiles")` from your own control; `HazelListings.view()` says which is showing. Since 0.0.8.
+- **The text is highlighted.** Keywords, types and constructors, strings, numbers and comments, near the colours Hazel's editor gives them, in light and dark. The colours are CSS variables a page can set: `--hazel-type`, `--hazel-string`, `--hazel-number`, `--hazel-comment`. Since 0.0.8.
+- **Text first, the editor when asked.** Set `window.HazelListingsOptions = { start: "request" }` before the script loads, or put `data-start="request"` on its tag, and the listings start as text until the button opens the editors. Each editor is a whole Hazel app, so on a phone this matters: see [On older or slower devices](#on-older-or-slower-devices). Without it, the editors start once the first listing is near the screen. Since 0.0.7 (in 0.0.7, a button on each listing; since 0.0.8, the one button for all).
 
 [Hazel Listings in an Article](https://matthewhammer.org/hazel/reports/044/) is the guide, and it is itself such a page.
 

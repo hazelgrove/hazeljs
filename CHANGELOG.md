@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.0.8 (2026-11-17)
 
-`hazel-listings.js`:
+`hazel-lib.js` is 0.0.7's, unchanged (hazelgrove/hazel at `2ab33ebd90`). `hazel-listings.js`:
 
 - **One button switches every listing between text and Hazel's editor** (Matthew, 2026-11-17: "let's have a single button that toggles from: plain text box (maybe with highlighting though? not there today), hazel edit box"). It replaces 0.0.7's button on each listing. **Edit in Hazel** starts the editors, one at a time in the page's order; **Show as text** shows each listing as it now is, edits and all, and keeps the editors loaded and hidden, so switching back is quick. Text first with `start: "request"`, as in 0.0.7; otherwise the editors start once the first listing is near the screen, as before. `HazelListingsOptions.toggle` puts the button in an element (or a selector's), or leaves it out (`false`); `HazelListings.view("text" | "tiles")` switches from the page's own control, and `HazelListings.view()` says which is showing. A go to definition from the page (`HazelListings.goto`) while the text shows scrolls to the listing that defines the name.
 - **The text is highlighted**: keywords, types and constructors, strings, numbers and comments, near the colours of Hazel's editor, in light and dark. As spans in the `<pre>`, so it still reads and copies as text; the colours are CSS variables (`--hazel-type`, `--hazel-string`, `--hazel-number`, `--hazel-comment`), and like the other defaults they have no weight, so a page's own rules win.
