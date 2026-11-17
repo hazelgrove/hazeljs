@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+`hazel-listings.js`:
+
+- **One button switches every listing between text and Hazel's editor** (Matthew, 2026-11-17: "let's have a single button that toggles from: plain text box (maybe with highlighting though? not there today), hazel edit box"). It replaces 0.0.7's button on each listing. **Edit in Hazel** starts the editors, one at a time in the page's order; **Show as text** shows each listing as it now is, edits and all, and keeps the editors loaded and hidden, so switching back is quick. Text first with `start: "request"`, as in 0.0.7; otherwise the editors start once the first listing is near the screen, as before. `HazelListingsOptions.toggle` puts the button in an element (or a selector's), or leaves it out (`false`); `HazelListings.view("text" | "tiles")` switches from the page's own control, and `HazelListings.view()` says which is showing. A go to definition from the page (`HazelListings.goto`) while the text shows scrolls to the listing that defines the name.
+- **The text is highlighted**: keywords, types and constructors, strings, numbers and comments, near the colours of Hazel's editor, in light and dark. As spans in the `<pre>`, so it still reads and copies as text; the colours are CSS variables (`--hazel-type`, `--hazel-string`, `--hazel-number`, `--hazel-comment`), and like the other defaults they have no weight, so a page's own rules win.
+
 ## 0.0.7 (2026-11-15)
 
 `hazel-lib.js` from hazelgrove/hazel at `2ab33ebd90` ([#2719](https://github.com/hazelgrove/hazel/pull/2719)), built on GitHub's machines by the **Build hazel-lib.js** workflow ([run 43752808750](https://github.com/hazelgrove/hazeljs/actions/runs/43752808750)): the same file, byte for byte, as Hazel's own deploy of that commit ([run 43750481255](https://github.com/hazelgrove/hazel/actions/runs/43750481255)), SHA-256 `14700f3486537d5e27ef3aef8938641a38fc51b5092f1e3f6adbd2a750a4d948` without its `//# buildInfo` line, as the workflow prints it. Since 0.0.5's `6c283c8a9f`, the library's one change:

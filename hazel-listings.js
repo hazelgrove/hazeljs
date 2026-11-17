@@ -13,11 +13,16 @@
 // that frame to reveal it, then scrolls to its caret. An edit in a listing reaches the other listings of its program, and
 // HazelListings.onChange(program, fn) tells the page.
 //
-// On request (Matthew, 2026-11-16, after the oracles were painfully slow on an older Android phone: "only reveal the Hazel
-// edit boxes when asked to"): with window.HazelListingsOptions = { start: "request" } set before this script loads, or
-// data-start="request" on its tag, a listing stays its text, with a button that opens it in Hazel's editor. Each frame is a
-// whole Hazel app, about 7 MB of JavaScript and some 50 MB of memory, so five of them unasked are too much for an older
-// phone, and Firefox on Android may run them on the page's own thread, where their work delays every key press.
+// Text or Hazel's editor, one button for the page (Matthew, 2026-11-17: "let's have a single button that toggles from: plain
+// text box (maybe with highlighting though? not there today), hazel edit box"): the listings show as text, highlighted, or
+// each in Hazel's editor, and the button switches all of them. Back to text shows each listing as it now is, edits and all;
+// the editors stay loaded behind it, so switching again is quick. The button goes before the first listing, or where
+// HazelListingsOptions.toggle says (an element, or a selector; false for none, the page calling HazelListings.view itself).
+// Text first, until asked (Matthew, 2026-11-16, after the oracles were painfully slow on an older Android phone: "only reveal
+// the Hazel edit boxes when asked to"): with window.HazelListingsOptions = { start: "request" } set before this script
+// loads, or data-start="request" on its tag. Each editor is a whole Hazel app, about 7 MB of JavaScript and some 50 MB of
+// memory, so five of them unasked are too much for an older phone, and Firefox on Android may run them on the page's own
+// thread, where their work delays every key press. Without it, the editors start once the first listing is near the screen.
 //
 // Limits, today: the frame comes from a branch build of Hazel (embed-editable) and takes messages only from its own origin and
 // the sites in its list (matthewhammer.org, localhost), so another site hosts its own copy (data-frame, above) or asks to be
@@ -38,6 +43,9 @@
   const listings = [];             // in document order
   const queue = [];                // listings waiting for their frame, made one at a time
   let making = null;
+  // what the listings show: "text" (highlighted) or "tiles" (Hazel's editor); the page's toggle
+  let view = ON_REQUEST ? "text" : "tiles";
+  let toggle = null;
 
   const pageDark = () => { const t = document.documentElement.getAttribute("data-theme"); return t === "dark" || (t !== "light" && !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches)); };
   const post = (L, msg) => L.frame && L.frame.contentWindow && L.frame.contentWindow.postMessage(msg, ORIGIN);
@@ -70,6 +78,16 @@
       }
     }
     return out;
+  }
+  // ---- the text, highlighted as Hazel's editor colours it, near enough: keywords, types and constructors (a capital first),
+  // strings, numbers, comments. The listing's text as it now is, edits and all; spans, so it still reads, and copies, as text
+  function paint(L) {
+    const frag = document.createDocumentFragment();
+    for (const [k, w] of tokens(L.text)) {
+      if (!k || k === "o") { frag.append(w); continue; }
+      const sp = document.createElement("span"); sp.className = "hz-" + (k === "C" ? "t" : k); sp.textContent = w; frag.append(sp);
+    }
+    L.pre.replaceChildren(frag);
   }
   // the places a line may break, best first: before a case's | ; before a sum's + ; before then and else ; after ; and before
   // a closing } ; after , and { and in ; after => and -> ; before || and && ; after a let's =. (Since 707, a string's ++ breaks
@@ -215,6 +233,7 @@
     if (L.frame) L.frame.remove();
     L.frame = null;
     L.holder.dataset.state = "text";
+    paint(L);
     L.pre.title = why + "; here is the text";
     if (making === L) pump();
   }
@@ -241,6 +260,7 @@
   }
   function reveal(L, name) {
     if (name === null) { L.holder.scrollIntoView({ block: "start", behavior: "smooth" }); return; }   // (a module itself: its listing)
+    if (view === "text") { L.holder.scrollIntoView({ block: "start", behavior: "smooth" }); return; }
     if (!L.ready) { L.reveal = name; if (!L.frame) request(L); return; }
     L.holder.scrollIntoView({ block: "nearest" });
     post(L, { type: "reveal", name });
@@ -254,7 +274,8 @@
     const m = e.data || {}, P = programs.get(L.program);
     if (m.type === "ready") {
       L.ready = true; L.sent = null; clearTimeout(L.timer);
-      L.holder.dataset.state = "tiles";
+      L.holder.dataset.state = view === "tiles" ? "tiles" : "text";
+      if (view !== "tiles") L.frame.style.display = "none";
       const dark = pageDark();
       post(L, { type: "theme", dark, contrast: dark });
       if (L.editable) post(L, { type: "editable", on: true });
@@ -338,6 +359,29 @@
   }
   function changed(P) { for (const fn of P.listeners) try { fn(specOf(P)); } catch (e) { console.error(e); } }
 
+  // ---- the view, switched for every listing: to text, each listing's text as it now is (the editors kept, hidden, and no
+  // more started); to the editors, each one shown, or started, in document order, one at a time
+  function setView(v) {
+    view = v === "tiles" ? "tiles" : "text";
+    for (const L of listings) {
+      // (the frame's own display: made with display:block inline, which a stylesheet cannot override)
+      if (view === "text") { if (L.frame) { L.holder.dataset.state = "text"; L.frame.style.display = "none"; } paint(L); }
+      else if (L.frame) { L.frame.style.display = "block"; L.holder.dataset.state = L.ready ? "tiles" : "loading"; if (L.ready) send(L, true); }
+      else if (!L.failed && !queue.includes(L)) queue.push(L);
+    }
+    if (view === "text") queue.length = 0; else pump();
+    drawToggle();
+  }
+  function drawToggle() {
+    if (!toggle) return;
+    const n = listings.length;
+    toggle.textContent = view === "tiles" ? "Show as text" : "Edit in Hazel";
+    toggle.title = view === "tiles"
+      ? "Shows the code as text again, highlighted; your edits are kept, and the editors stay loaded"
+      : `Opens the code in Hazel's editor, ${n === 1 ? "one listing" : `each of the ${n} listings`}: about 7 MB of JavaScript each, a few seconds on a laptop, longer on a phone`;
+    toggle.setAttribute("aria-pressed", String(view === "tiles"));
+  }
+
   // ---- the page's listings, found and started once the first is near the screen
   function init() {
     for (const pre of document.querySelectorAll("pre.hazel")) {
@@ -356,16 +400,20 @@
       L.original = L.text;
       if (L.module) P.modules.push(L); else P.preamble = L;
       listings.push(L);
-      if (ON_REQUEST) {
-        const b = document.createElement("button");
-        b.type = "button"; b.className = "hazel-listing-open";
-        b.textContent = "Open in Hazel's editor";
-        b.title = "Loads Hazel's editor for this listing: about 7 MB, a few seconds on a laptop, longer on a phone";
-        b.addEventListener("click", () => request(L));
-        holder.prepend(b);
-      } else queue.push(L);
+      paint(L);
+      if (!ON_REQUEST) queue.push(L);
     }
     if (!listings.length) return;
+    // the one toggle: before the first listing, or where the page asks
+    const at = (window.HazelListingsOptions || {}).toggle;
+    if (at !== false) {
+      toggle = document.createElement("button");
+      toggle.type = "button"; toggle.className = "hazel-listings-toggle";
+      toggle.addEventListener("click", () => setView(view === "tiles" ? "text" : "tiles"));
+      const place = typeof at === "string" ? document.querySelector(at) : at && at.nodeType === 1 ? at : null;
+      if (place) place.append(toggle); else listings[0].holder.before(toggle);
+      drawToggle();
+    }
     // (a page needs no stylesheet of its own for the listings: these defaults, the text hidden once the editor shows, have no
     // weight, by :where(), so any rule of the page's wins; for hazeljs's copy, loaded from npm, Matthew 2026-11-06: "it would
     // be best to have that public package reflect what we do, overall, including documentation")
@@ -376,7 +424,15 @@
         + ":where(.hazel-listing-frame) { border: 0; }\n"
         + ":where(.hazel-listing-status) { margin: 4px 0 0; padding-left: 1.2em; color: #b45309; }\n"
         + ":where(.hazel-listing-status[hidden]) { display: none; }\n"
-        + ":where(.hazel-listing-open) { display: block; margin: 0 0 6px auto; }\n";
+        + ':where(.hazel-listing[data-state="text"]) > :where(.hazel-listing-frame) { display: none; }\n'
+        + ":where(.hazel-listings-toggle) { display: block; margin: 0 0 6px auto; }\n"
+        + ":where(pre.hazel .hz-k) { font-weight: 600; }\n"
+        + ":where(pre.hazel .hz-t) { color: var(--hazel-type, #8b45c9); }\n"
+        + ":where(pre.hazel .hz-s) { color: var(--hazel-string, #9a5b00); }\n"
+        + ":where(pre.hazel .hz-n) { color: var(--hazel-number, #0e7490); }\n"
+        + ":where(pre.hazel .hz-c) { color: var(--hazel-comment, #4d7c5a); font-style: italic; }\n"
+        + "@media (prefers-color-scheme: dark) { :where(:root:not([data-theme=\"light\"])) { --hazel-type: #c9a0f2; --hazel-string: #e5c07b; --hazel-number: #6cc5d6; --hazel-comment: #93bf9b; } }\n"
+        + ':where(:root[data-theme="dark"]) { --hazel-type: #c9a0f2; --hazel-string: #e5c07b; --hazel-number: #6cc5d6; --hazel-comment: #93bf9b; }\n';
       document.head.prepend(st);
     }
     window.addEventListener("message", onMessage);
@@ -412,7 +468,10 @@
       const P = programs.get(program); if (!P) return;
       for (const L of [P.preamble, ...P.modules]) if (L && L.text !== L.original) { L.undo.push(L.text); L.text = L.original; L.sent = null; }
       sendAll(P); changed(P);
+      if (view === "text") for (const L of [P.preamble, ...P.modules]) if (L) paint(L);
     },
+    // the listings' view, "text" or "tiles" (Hazel's editor), as the toggle switches it; with no argument, which it is
+    view(v) { if (v !== undefined) setView(v); return view; },
   };
   // (run where it is loaded: at the end of the body, every listing is already in the page)
   init();
