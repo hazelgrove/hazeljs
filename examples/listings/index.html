@@ -1,0 +1,34 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hazeljs: listings with the packaged editor</title>
+<!-- (hazelgrove/hazeljs#2, the branch editor-in-package) Two listings of one program, in Hazel's editor from this package's
+     editor/. The script's address says where the package is: here, two folders up. To try it as from a CDN, on another origin,
+     serve the package with scripts/serve-cors.py on a second port and open this page with ?pkg=http://localhost:PORT/ -->
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; }
+  pre.hazel { font: 14px/1.4 ui-monospace, monospace; background: #f6f6f3; padding: 8px 10px; border-radius: 6px; }
+  #log { font: 12px/1.4 ui-monospace, monospace; color: #555; white-space: pre-wrap; }
+</style>
+<h1>Listings, with the packaged editor</h1>
+<p>The program's types:</p>
+<pre class="hazel" data-program="shapes">type Shape = + Circle(Float) + Rect(Float, Float) in</pre>
+<p>A module that uses them; Ctrl+click on <code>Shape</code> goes to the listing above:</p>
+<pre class="hazel" data-program="shapes" data-module="Geometry">let area : Shape -> Float = fun s ->
+  case s
+  | Circle(r) => 3.14159 *. r *. r
+  | Rect(w, h) => w *. h
+  end</pre>
+<p id="log"></p>
+<script>
+  // the package's address: this checkout, or another origin (?pkg=), as a CDN would be
+  const pkg = new URLSearchParams(location.search).get("pkg") || "../../";
+  const s = document.createElement("script");
+  s.src = new URL("hazel-listings.js", new URL(pkg, location.href)).href;
+  // (a script added from script has no document.currentScript of its own when it runs late: name the package for it)
+  s.dataset.editor = new URL("editor/", s.src).href;
+  document.body.append(s);
+  const log = m => { document.getElementById("log").textContent += m + "\n"; };
+  log("package: " + s.src);
+  addEventListener("message", e => { if (e.data && e.data.type) log("from a frame (" + e.origin + "): " + e.data.type); });
+</script>
