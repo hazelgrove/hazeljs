@@ -24,19 +24,47 @@
 // memory, so five of them unasked are too much for an older phone, and Firefox on Android may run them on the page's own
 // thread, where their work delays every key press. Without it, the editors start once the first listing is near the screen.
 //
-// Limits, today: the frame comes from a branch build of Hazel (embed-editable) and takes messages only from its own origin and
-// the sites in its list (matthewhammer.org, localhost), so another site hosts its own copy (data-frame, above) or asks to be
-// added to the list; a go to definition
+// Where the editor comes from (hazelgrove/hazeljs#2, on the branch editor-in-package): this package's own copy, editor/, beside
+// this script, built from the same commit of Hazel as hazel-lib.js. An npm CDN serves files, not pages (jsDelivr sends HTML as
+// text/plain), so the script makes the frame's page itself: it reads editor/index.html, puts a <base> at editor/ and a Worker
+// that loads across origins at the top of its head, and frames it from a blob: URL. A blob: page has this page's origin, and
+// Hazel's frame takes messages from its own origin, so it works on any site, with no list. data-frame="URL" on the script tag
+// frames a copy of Hazel's app at URL directly, as before (it takes messages only from its own origin and the sites in its
+// list: matthewhammer.org, localhost).
+// Limits, today: a go to definition
 // starts only in an editable cell, so listings are editable (data-editable="false" makes one read-only, a place to reveal
 // into, not to start from); undo is the page's (^ticket(702)).
 (() => {
   "use strict";
-  // Where Hazel's editor comes from: build.hazel.org's embed-editable build by default, or the page's own copy, named on
-  // the script tag (<script src="hazel-listings.js" data-frame="/hazel/index.html#embed">). The frame takes messages from its
-  // own origin, so a page served beside its own copy of the editor needs no site list (^report(44), "Your own site").
+  // Where Hazel's editor comes from: the package's editor/, beside this script, framed from a page this script makes (above);
+  // or a copy named on the script tag (<script src="hazel-listings.js" data-frame="/hazel/index.html#embed">), framed directly.
   const ME = document.currentScript;
-  const FRAME = new URL((ME && ME.dataset.frame) || "https://build.hazel.org/embed-editable/index.html#embed", location.href).href;
-  const ORIGIN = new URL(FRAME).origin;
+  const DIRECT = ME && ME.dataset.frame ? new URL(ME.dataset.frame, location.href).href : null;
+  const EDITOR = new URL((ME && ME.dataset.editor) || "editor/", (ME && ME.src) || location.href).href;
+  // the frames' origin: the copy's, framed directly; else this page's own, a blob: page's
+  const ORIGIN = DIRECT ? new URL(DIRECT).origin : location.origin;
+  // (inside the made page, before Hazel's scripts) Hazel starts its worker as "worker.js", which the <base> makes the
+  // package's address; a worker must have its page's origin, so one from elsewhere starts as a blob: that imports it
+  const WORKER_SHIM = `(() => { const W = window.Worker; if (!W) return;
+    const X = function (url, opts) { const u = new URL(url, document.baseURI);
+      if (u.origin === location.origin) return new W(u.href, opts);
+      const b = new Blob(["importScripts(" + JSON.stringify(u.href) + ");"], { type: "text/javascript" });
+      return new W(URL.createObjectURL(b), opts); };
+    X.prototype = W.prototype; window.Worker = X; })();`;
+  // the frames' address, made once: data-frame's, or a blob: page from the package's editor/index.html
+  let framePage = null;
+  function frameUrl() {
+    if (DIRECT) return Promise.resolve(DIRECT);
+    if (!framePage) framePage = fetch(EDITOR + "index.html").then(r => {
+      if (!r.ok) throw new Error(EDITOR + "index.html: " + r.status);
+      return r.text();
+    }).then(html => {
+      const head = `<base href="${EDITOR}"><script>${WORKER_SHIM}<\/script>`;
+      const page = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, m => m + head) : head + html;
+      return URL.createObjectURL(new Blob([page], { type: "text/html" })) + "#embed";
+    });
+    return framePage;
+  }
   const WAIT_MS = 45000;
   const ON_REQUEST = ((window.HazelListingsOptions || {}).start || (ME && ME.dataset.start)) === "request";
   const programs = new Map();      // name -> {name, preamble: listing|null, modules: [listing], tail, listeners: []}
@@ -206,7 +234,7 @@
     L.frame = document.createElement("iframe");
     L.frame.className = "hazel-listing-frame";
     L.frame.title = L.module ? `Hazel's editor: the module ${L.module}` : "Hazel's editor: the program's types";
-    L.frame.src = FRAME;
+    frameUrl().then(u => { if (L.frame) L.frame.src = u; }, err => fail(L, "Hazel's editor did not load (" + (err && err.message || err) + ")"));
     // (in the text's place, visible, as tall as the text, while Hazel starts: a frame kept invisible meanwhile is not drawn by the
     // browser, so Hazel never measures its code and says its height is 0)
     L.frame.style.cssText = "width:100%;height:" + Math.max(40, L.pre.offsetHeight) + "px;display:block";

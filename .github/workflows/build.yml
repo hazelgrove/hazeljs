@@ -15,6 +15,10 @@ on:
       pr:
         description: "Its pull request's URL, for package.json (empty: keep the one recorded)"
         required: false
+      editor:
+        description: "Build Hazel's editor too, into editor/ (hazelgrove/hazeljs#2)"
+        type: boolean
+        default: false
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -37,16 +41,22 @@ jobs:
           COMMIT: ${{ inputs.commit }}
           BRANCH: ${{ inputs.branch }}
           PR: ${{ inputs.pr }}
+          EDITOR: ${{ inputs.editor && '1' || '' }}
+          # (the editor's build-info rule looks up the branch's pull request, as in Hazel's Deploy workflow)
+          GH_TOKEN: ${{ github.token }}
         run: ./pkg/scripts/build.sh . "$COMMIT" "$BRANCH" "$PR" | tee build.log
       - name: Push it to a branch of its own
         shell: bash
         run: |
           cd pkg
           short=$(node -p "require('./package.json').hazel.commit.slice(0, 10)")
+          # (with the editor, build/<commit>-editor)
+          name="build/$short"; if [ -d editor ]; then name="$name-editor"; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b "build/$short"
+          git checkout -b "$name"
           git add hazel-lib.js package.json
-          git commit -m "hazel-lib.js built from hazelgrove/hazel at $short, on GitHub's machines (the Build hazel-lib.js workflow)"
-          git push origin "build/$short"
-          { echo '## Build hazel-lib.js'; echo '```'; cat ../build.log; echo "branch: build/$short"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          if [ -d editor ]; then git add -f editor; fi
+          git commit -m "hazel-lib.js$( [ -d editor ] && echo " and Hazel's editor") built from hazelgrove/hazel at $short, on GitHub's machines (the Build hazel-lib.js workflow)"
+          git push origin "$name"
+          { echo '## Build hazel-lib.js'; echo '```'; cat ../build.log; echo "branch: $name"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

@@ -41,6 +41,7 @@
     "index.d.ts",
     "hazel-lib.js",
     "hazel-listings.js",
+    "editor/",
     "hazelnut.svg",
     "CHANGELOG.md"
   ],

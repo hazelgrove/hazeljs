@@ -2,6 +2,7 @@
 # Build the package's hazel-lib.js from a commit of hazelgrove/hazel.
 #
 #   scripts/build.sh HAZEL_CHECKOUT COMMIT [BRANCH] [PR_URL]
+#   EDITOR=1 scripts/build.sh ...    and Hazel's editor too, into editor/ (hazelgrove/hazeljs#2)
 #
 # HAZEL_CHECKOUT is a clone of hazelgrove/hazel with its toolchain set up (see its README).
 # The script checks out COMMIT, builds hazel-lib.js there in the release profile with
@@ -24,9 +25,20 @@ git checkout --quiet --detach "$commit"
 make setup-zarith
 if command -v dune >/dev/null; then dune=(dune); else dune=(opam exec -- dune); fi
 GITHUB_SHA="$commit" "${dune[@]}" build src/web/www/hazel-lib.js --profile release
+# (hazelgrove/hazeljs#2) Hazel's editor from the same commit: its whole app, as Hazel's own Deploy workflow builds it, for
+# hazel-listings.js to frame from the package. The app's files, less the library (the package's own hazel-lib.js).
+if [ "${EDITOR:-}" = 1 ]; then
+  GITHUB_SHA="$commit" "${dune[@]}" build src --profile release
+fi
 
 cp "$hazel/_build/default/src/web/www/hazel-lib.js" "$pkg/hazel-lib.js"
 chmod 644 "$pkg/hazel-lib.js"
+if [ "${EDITOR:-}" = 1 ]; then
+  rm -rf "$pkg/editor"
+  cp -rL "$hazel/_build/default/src/web/www" "$pkg/editor"
+  rm -f "$pkg/editor/hazel-lib.js"
+  chmod -R u+w,go-w "$pkg/editor"
+fi
 COMMIT="$commit" BRANCH="$branch" PR="$pr" PKG="$pkg/package.json" node -e '
   const fs = require("fs"), p = JSON.parse(fs.readFileSync(process.env.PKG, "utf8"));
   const was = p.hazel || {};
@@ -36,4 +48,7 @@ COMMIT="$commit" BRANCH="$branch" PR="$pr" PKG="$pkg/package.json" node -e '
 echo "hazel-lib.js built from hazelgrove/hazel at $commit"
 echo "  size:    $(wc -c < "$pkg/hazel-lib.js") bytes"
 echo "  sha256 without the buildInfo line: $(grep -v '^//# buildInfo:' "$pkg/hazel-lib.js" | sha256sum | cut -d' ' -f1)"
+if [ -d "$pkg/editor" ]; then
+  echo "  editor/: $(find "$pkg/editor" -type f | wc -l) files, $(du -sb "$pkg/editor" | cut -f1) bytes, from the same commit"
+fi
 echo "  package.json's hazel field: $(node -p "JSON.stringify(require('$pkg/package.json').hazel)")"
