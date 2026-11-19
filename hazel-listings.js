@@ -24,7 +24,7 @@
 // memory, so five of them unasked are too much for an older phone, and Firefox on Android may run them on the page's own
 // thread, where their work delays every key press. Without it, the editors start once the first listing is near the screen.
 //
-// Where the editor comes from (hazelgrove/hazeljs#2, on the branch editor-in-package): this package's own copy, editor/, beside
+// Where the editor comes from (since 0.0.9, hazelgrove/hazeljs#2): this package's own copy, editor/, beside
 // this script, built from the same commit of Hazel as hazel-lib.js. An npm CDN serves files, not pages (jsDelivr sends HTML as
 // text/plain), so the script makes the frame's page itself: it reads editor/index.html, puts a <base> at editor/ and a Worker
 // that loads across origins at the top of its head, and frames it from a blob: URL. A blob: page has this page's origin, and

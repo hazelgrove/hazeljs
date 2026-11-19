@@ -15,7 +15,7 @@ const double = Hazel.run("fun (x : Int) -> x * 2").value;
 double(21); // 42
 ```
 
-> **Experimental.** This is a prototype (0.0.x): the API may change in any release. It is built from the draft library in [hazelgrove/hazel#2711](https://github.com/hazelgrove/hazel/pull/2711) and [#2719](https://github.com/hazelgrove/hazel/pull/2719), at commit `6c283c8a9f` (`Hazel.build` names it).
+> **Experimental.** This is a prototype (0.0.x): the API may change in any release. It is built from the draft library in [hazelgrove/hazel#2711](https://github.com/hazelgrove/hazel/pull/2711) and [#2719](https://github.com/hazelgrove/hazel/pull/2719), with the editable embed of [#2814](https://github.com/hazelgrove/hazel/pull/2814), on Hazel's branch `hazeljs-editor` at commit `7fcf33f33a` (`Hazel.build` names it).
 
 ## Why
 
@@ -32,7 +32,7 @@ npm install hazeljs
 Or in a web page, from a CDN that serves npm packages:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.8/hazel-lib.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.9/hazel-lib.js"></script>
 <script>
   console.log(Hazel.run("1 + 2").value); // 3
 </script>
@@ -222,12 +222,12 @@ The game shows a room's errors in three places: under the room's box, by name, w
 
 The library holds no editor: you bring the box. The apps under [Examples](#examples) show their Hazel in Hazel's own tile editor instead of a text area. Each module is in a frame of Hazel's app, in its editable embed mode. The page and its frames talk by `postMessage`:
 
-> **On the branch `editor-in-package`** ([hazelgrove/hazeljs#2](https://github.com/hazelgrove/hazeljs/issues/2), an experiment): the editor is in the package, as `editor/` (78 files, about 11 MB), built from the same commit of Hazel as `hazel-lib.js` (Hazel's branch `hazeljs-editor`). `hazel-listings.js` frames that copy by default. An npm CDN serves files, not pages (jsDelivr sends `.html` as plain text), so the script makes each frame's page itself: it reads `editor/index.html`, adds a `<base>` at `editor/` and a worker that loads across sites, and frames it from a `blob:` address. A `blob:` page has the embedding page's origin, so the frame takes the page's messages on any site, with no list. `data-frame="URL"` still frames a copy of Hazel's app directly. `examples/listings/` tries it, on the same site or (with `?pkg=`) from a second, CDN-like server, `scripts/serve-cors.py`. Elsewhere in this README, the editor is described as on `main`: from a build of Hazel's `embed-editable` branch ([hazelgrove/hazel#2814](https://github.com/hazelgrove/hazel/pull/2814)) at `https://build.hazel.org/embed-editable/index.html#embed`.
+**The editor is in the package** (since 0.0.9, [hazelgrove/hazeljs#2](https://github.com/hazelgrove/hazeljs/issues/2)): `editor/`, Hazel's app (78 files, 11 MB), built from the same commit of Hazel as `hazel-lib.js`. Nothing loads from anywhere else: the editor's scripts, styles, fonts and images all come from the package, beside `hazel-listings.js`, wherever you load it from. An npm CDN serves files, not pages (jsDelivr sends `.html` as plain text), so `hazel-listings.js` makes each frame's page itself: it reads `editor/index.html`, adds a `<base>` at `editor/`, and frames it from a `blob:` address. A `blob:` page has your page's origin, so the frame takes your page's messages on any site. Before 0.0.9, the frame came from a build of Hazel's `embed-editable` branch at `https://build.hazel.org/embed-editable/`, which took messages only from a few sites.
 
 - The page sends a frame the whole program (`{type: "set", preamble, modules, tail}`) and the module it shows (`{type: "focus", module}`).
 - The frame sends each edit's text (`{type: "edit", text}`), the program's errors and holes, by module (`{type: "status", ...}`), and a go to definition it cannot answer itself (`{type: "goto", name}`), for a name defined in another module.
 
-After each edit, the page sends the new program to the other frames and builds it again with `runProgram`. The protocol in full is in Hazel's [docs/hazel-as-a-js-library.md](https://github.com/hazelgrove/hazel/blob/embed-editable/docs/hazel-as-a-js-library.md), on that branch.
+After each edit, the page sends the new program to the other frames and builds it again with `runProgram`. The protocol in full is in Hazel's [docs/hazel-as-a-js-library.md](https://github.com/hazelgrove/hazel/blob/hazeljs-editor/docs/hazel-as-a-js-library.md), on the branch the editor is built from, `hazeljs-editor`.
 
 ### Listings in an article
 
@@ -240,7 +240,7 @@ For an article or a blog post, `hazel-listings.js` does all of that for each `<p
   | Circle(r) => 3.14159 *. r *. r
   | Rect(w, h) => w *. h
   end</pre>
-<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.8/hazel-listings.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.9/hazel-listings.js"></script>
 ```
 
 - **One program per name.** Listings with the same `data-program` are one program: the listing without `data-module` is its preamble, and each other listing is a module.
@@ -254,7 +254,7 @@ For an article or a blog post, `hazel-listings.js` does all of that for each `<p
 
 [Hazel Listings in an Article](https://matthewhammer.org/hazel/reports/044/) is the guide, and it is itself such a page.
 
-**Where the frame works.** Hazel's frame takes messages only from pages on matthewhammer.org, from `localhost` (any port), and from its own site. Elsewhere, serve a copy of Hazel's editor from your own site, and point the script at it: `<script src=".../hazel-listings.js" data-frame="/hazel/index.html#embed">`. The guide's section [Your own site](https://matthewhammer.org/hazel/reports/044/#host) has the steps.
+**Where the frame works.** On any site, since 0.0.9: from a CDN, from `node_modules` served beside your page, or from a copy of the package on your own server. The frame's page has your page's origin, so the editor runs as part of your page, as the script itself does: it reads one key of your page's local storage, `HAZEL_THEME`, Hazel's saved colours. To frame a copy of Hazel's app instead, at an address of its own, name it on the script tag: `<script src=".../hazel-listings.js" data-frame="/hazel/index.html#embed">`; that copy takes messages only from its own site and the sites in its list, as before 0.0.9 (the guide's section [Your own site](https://matthewhammer.org/hazel/reports/044/#host)). A page whose Content Security Policy limits frames must allow `blob:` in `frame-src`.
 
 ## Examples
 
@@ -301,7 +301,7 @@ Try it at https://matthewhammer.org/hazeljs-petri-example/, or clone it, serve t
 
 ## Size and speed
 
-`hazel-lib.js` is about 2.8 MB, 640 KB gzipped. Measured in Node 22 on a laptop: `require("hazeljs")` takes about 170 ms, and running a small program about 30 ms. A module of 100 short members takes about 110 ms to analyze, and one of 400 about 2.3 s; after an edit, only the modules whose text changed are read again.
+`hazel-lib.js` is about 2.8 MB, 640 KB gzipped. Since 0.0.9 the package also holds Hazel's editor, `editor/` (11 MB), which a page loads only for Hazel's editor in its listings. Measured in Node 22 on a laptop: `require("hazeljs")` takes about 170 ms, and running a small program about 30 ms. A module of 100 short members takes about 110 ms to analyze, and one of 400 about 2.3 s; after an edit, only the modules whose text changed are read again.
 
 ## On older or slower devices
 
@@ -319,7 +319,7 @@ An older phone runs the same JavaScript several times slower than a laptop. Thes
 
 `hazel-lib.js` is 2.8 MB of compiled JavaScript, so reading it tells you little. What you can check is that it is exactly what Hazel's source compiles to, at a commit you can read.
 
-**It names its commit.** `Hazel.build` returns the hazelgrove/hazel commit it was built from, and the `hazel` field of `package.json` names the same commit, with its branch and pull request. For this release that is `6c283c8a9f7b0d79450c1397c4a12a53f2c63b86`.
+**It names its commit.** `Hazel.build` returns the hazelgrove/hazel commit it was built from, and the `hazel` field of `package.json` names the same commit, with its branch and pull request. For this release that is `7fcf33f33a9baaf787fb2fec689c828f89b0fbed`, on Hazel's branch `hazeljs-editor`.
 
 **Rebuild it and compare.** With a clone of [hazelgrove/hazel](https://github.com/hazelgrove/hazel) and its toolchain set up (see its README), run
 
@@ -327,18 +327,20 @@ An older phone runs the same JavaScript several times slower than a laptop. Thes
 scripts/verify-build.sh path/to/hazel
 ```
 
-It checks out that commit, builds `hazel-lib.js` the way Hazel's own Deploy workflow does (the release profile, with `GITHUB_SHA` set to the commit), and compares the two files. Every byte must match except one comment line, `//# buildInfo:`, where js_of_ocaml names its own version label (`5.9.1` from one install, `5.9.1+5.9.1` from Hazel's lock file). Without that line, this release's file has the SHA-256 `526c0908278d821442e9af03a1faddda441596a5a849469303164f34c5c4a14b`. Built on GitHub's machines, as this release's was, it matches with that line too.
+It checks out that commit, builds `hazel-lib.js` the way Hazel's own Deploy workflow does (the release profile, with `GITHUB_SHA` set to the commit), and compares the two files. Every byte must match except one comment line, `//# buildInfo:`, where js_of_ocaml names its own version label (`5.9.1` from one install, `5.9.1+5.9.1` from Hazel's lock file). Without that line, this release's file has the SHA-256 `24d531633f54ead440689d6d49014880662d44a97eb48d1f559470d56a771074`. Built on GitHub's machines, as this release's was, it matches with that line too.
 
 **How a release's file is made.** `scripts/build.sh path/to/hazel COMMIT` builds `hazel-lib.js` from that commit the same way and records the commit in `package.json`. The **Build hazel-lib.js** workflow runs it on GitHub's machines and pushes the result to a branch `build/<commit>`, so a release's file is built where anyone can see it.
 
 **Or let GitHub rebuild it.** This repository's **Verify hazel-lib.js** workflow runs the same script on GitHub's machines, from a fresh clone of Hazel. Anyone can run it from the Actions tab, and its runs are public.
 
-**Hazel's own CI built it too.** Hazel's Deploy workflow builds every commit pushed to hazelgrove/hazel. Its build of this commit ([run 42296395095](https://github.com/hazelgrove/hazel/actions/runs/42296395095)) is this release's file, byte for byte. That build is served at `https://build.hazel.org/js-library-embed/hazel-lib.js` only until the branch gets a newer commit:
+**Hazel's own CI built it too.** Hazel's Deploy workflow builds every commit pushed to hazelgrove/hazel. Its build of this commit ([run 44565698736](https://github.com/hazelgrove/hazel/actions/runs/44565698736)) is this release's file, byte for byte. That build is served at `https://build.hazel.org/hazeljs-editor/hazel-lib.js` only until the branch gets a newer commit:
 
 ```sh
-curl -sL https://build.hazel.org/js-library-embed/hazel-lib.js | grep -v '^//# buildInfo:' | sha256sum
+curl -sL https://build.hazel.org/hazeljs-editor/hazel-lib.js | grep -v '^//# buildInfo:' | sha256sum
 grep -v '^//# buildInfo:' node_modules/hazeljs/hazel-lib.js | sha256sum
 ```
+
+**The editor, too.** The same workflow run builds `editor/` from the same commit (`EDITOR=1 scripts/build.sh`). Hazel's deploy of that commit serves the same 78 files at `https://build.hazel.org/hazeljs-editor/`, byte for byte, except two: `index.html`, where the build takes out the page's one outside link (Google's Material Icons stylesheet, for a command palette embed mode never shows), and `hazel.js`, which names the directory the OCaml standard library was in on the build machine (`/home/runner/work/hazeljs/...` against `/home/runner/work/hazel/...`, 4 bytes). `scripts/verify-build.sh` checks `hazel-lib.js` only, not yet `editor/`.
 
 What this shows is where the file came from. It is that commit of Hazel, compiled by the OCaml toolchain in Hazel's lock file, and nothing else. It does not show that the code at that commit does what you want; for that, read it, or trust the people who wrote it.
 
@@ -349,7 +351,7 @@ What this shows is where the file came from. It is that commit of Hazel, compile
 - **One global.** The library puts one `Hazel` object on the global object.
 - **A console line for slow reads.** A text that only Hazel's slower, recovering parser can read (an unclosed bracket, such as `let x = (`) prints a `SLOW PARSE (...)` line to the console when it is read.
 - **No undo or redo.** The library holds no editor: it reads the text you give it and answers. Undo and redo are part of Hazel's editor, not of this library, so the page that holds the text keeps its history: keep the texts (or each module's text) it has had, and pass an older one again to go back. Going back costs what an edit does: the modules whose text changed since the last call are read again, and the others are not.
-- **The editor is not in the package.** Hazel's tile editor comes from a branch build of Hazel's app, in a frame ([above](#hazels-own-editor-beside-your-page)), and takes messages only from the sites in its list, or from a copy served beside the page. (On the branch `editor-in-package`, it is: see [above](#hazels-own-editor-beside-your-page).)
+- **The editor is most of the package.** `editor/` is Hazel's whole app, 11 MB of the package's 14, though a page loads it only when a listing's editor starts, and only about 8 MB of it. It comes from a branch of Hazel, `hazeljs-editor`, not yet from `dev` ([hazelgrove/hazeljs#2](https://github.com/hazelgrove/hazeljs/issues/2)).
 - **One app per listing.** Each listing's frame starts a whole Hazel app, one after another, so a page with many listings takes a while to start them all, and an older phone may not cope; starting them as text ([listings](#listings-in-an-article)) starts the editors only when asked.
 - **Errors name a term, not a place.** An error's `id` is the id of its term in Hazel's syntax tree; the library gives no line and column for it yet.
 - **A stuck value is a debug printout.** Where an error or a hole stopped the evaluation, `{ hazel }` holds an OCaml printout of the term, not Hazel syntax.

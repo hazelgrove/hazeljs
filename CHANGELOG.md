@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.0.9 (2026-11-19)
+
+**Hazel's editor is in the package, and nothing loads from anywhere else** ([hazelgrove/hazeljs#2](https://github.com/hazelgrove/hazeljs/issues/2); Matthew, 2026-11-19: "let's repackage the hazeljs npm package to include the tile editor work, and avoid any dynamic loads from anywhere else"). Through 0.0.8, `hazel-listings.js` framed Hazel's editor from a preview build of a draft branch, `https://build.hazel.org/embed-editable/`, built from another commit than `hazel-lib.js`, which a push to that branch could change under any pinned version, and which took messages only from matthewhammer.org and `localhost`.
+
+- **`editor/`**: Hazel's app, 78 files, 11 MB, built in the same workflow run and from the same commit as `hazel-lib.js`: hazelgrove/hazel at `7fcf33f33a` (branch `hazeljs-editor`: [#2814](https://github.com/hazelgrove/hazel/pull/2814)'s editable embed, with [#2719](https://github.com/hazelgrove/hazel/pull/2719)'s last two commits and a fix for embed mode on a `blob:` page). Without what a frame never loads: the tutorial's intro video, the bundler's input, and Google's Material Icons stylesheet, for a command palette embed mode never shows; the build fails if the editor's page or a stylesheet still names an outside address.
+- **`hazel-listings.js` frames the packaged editor by default**, from wherever the script itself was loaded: a CDN, `node_modules`, or your own copy. An npm CDN serves files, not pages (jsDelivr sends `.html` as plain text), so the script reads `editor/index.html`, adds a `<base>` at `editor/`, and frames it from a `blob:` address, which has your page's origin: the frame takes your page's messages on any site, with no list. `data-frame="URL"` frames a copy of Hazel's app at an address of its own, as before.
+- **Checked in a browser**, with the listings example (`examples/listings/`) on one origin and the package on another, served as a CDN serves it (`scripts/serve-cors.py`: `.html` as plain text): both listings start in Hazel's editor, and the page and its frames request nothing from any other host.
+
+`hazel-lib.js` is built from `7fcf33f33a`, byte for byte the file Hazel's own deploy of that commit serves ([run 44565698736](https://github.com/hazelgrove/hazel/actions/runs/44565698736)). Since 0.0.8's (`2ab33ebd90`), nothing that analyzes or runs a program has changed; the file differs because two shared modules of the web app did, which the library compiles in but does not call: `JsUtil` (embed mode's address on a `blob:` page) and `Menu` (embed mode's right-click menu opens down).
+
+The **Build hazel-lib.js** workflow builds the editor too, with its new input `editor` ([run 44567106513](https://github.com/hazelgrove/hazeljs/actions/runs/44567106513)).
+
+README: the editor in the package, where the frame works, the editor's size, and how to check the editor against Hazel's own deploy.
+
 ## 0.0.8 (2026-11-17)
 
 `hazel-lib.js` is 0.0.7's, unchanged (hazelgrove/hazel at `2ab33ebd90`). `hazel-listings.js`:

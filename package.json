@@ -1,7 +1,7 @@
 {
   "name": "hazeljs",
-  "version": "0.0.8",
-  "description": "Hazel edit boxes that extend ordinary JavaScript programs with custom behavior. Experimental.",
+  "version": "0.0.9",
+  "description": "Hazel edit boxes that extend ordinary JavaScript programs with custom behavior, and Hazel's own editor, in the package. Experimental.",
   "keywords": [
     "hazel",
     "hazlet",
@@ -51,6 +51,6 @@
   "hazel": {
     "commit": "7fcf33f33a9baaf787fb2fec689c828f89b0fbed",
     "branch": "hazeljs-editor",
-    "pr": "https://github.com/hazelgrove/hazel/pull/2719"
+    "pr": "https://github.com/hazelgrove/hazel/pull/2814"
   }
 }
