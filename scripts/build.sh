@@ -39,6 +39,21 @@ if [ "${EDITOR:-}" = 1 ]; then
   rm -f "$pkg/editor/hazel-lib.js"
   # (what a frame never loads: the build's own files, the bundler's input, a style note, and the tutorial's intro video)
   rm -f "$pkg/editor/dune" "$pkg/editor/prebundle.js" "$pkg/editor/style/README.md" "$pkg/editor/img/hazel-probes-intro.mp4"
+  # (hazelgrove/hazeljs#2: nothing from anywhere else) the page's one outside load is Google's Material Icons stylesheet, for
+  # the command palette, which embed mode never shows: take it out, then fail the build if the page or a stylesheet still
+  # names an outside address (comments aside)
+  node -e '
+    const fs = require("fs"), path = require("path"), dir = process.argv[1], page = path.join(dir, "index.html");
+    let s = fs.readFileSync(page, "utf8");
+    s = s.replace(/\s*<link rel="preconnect" href="https:\/\/fonts\.gstatic\.com\/"[^>]*>/, "")
+         .replace(/\s*<link\s+href="https:\/\/fonts\.googleapis\.com\/[^"]*"\s+rel="stylesheet"\s*\/?>/, "");
+    fs.writeFileSync(page, s);
+    const outside = f => /(?:src|href)\s*=\s*["\x27]?https?:|url\(\s*["\x27]?https?:|@import\s+(?:url\()?["\x27]?https?:/i
+      .test(fs.readFileSync(f, "utf8").replace(/<!--[\s\S]*?-->|\/\*[\s\S]*?\*\//g, ""));
+    const walk = d => fs.readdirSync(d, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]);
+    const bad = walk(dir).filter(f => /\.(html|css)$/.test(f)).filter(outside);
+    if (bad.length) { console.error("the editor still loads from outside the package: " + bad.join(", ")); process.exit(1); }
+  ' "$pkg/editor"
   chmod -R u+w,go-w "$pkg/editor"
 fi
 COMMIT="$commit" BRANCH="$branch" PR="$pr" PKG="$pkg/package.json" node -e '
