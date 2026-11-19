@@ -1,0 +1,359 @@
+/* STEPPER */
+
+.stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+}
+
+.step-border {
+  padding: 0.5em;
+  padding-left: 1.2em;
+  border-top: 1px dotted var(--cell-result-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.step-border.hidden {
+  background-color: var(--cell-result-hidden);
+}
+
+.step-display {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5em;
+}
+
+.step-output {
+  flex-grow: 1;
+}
+
+.stepper-controls {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5em;
+}
+
+.induction-scrut {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5em;
+  align-items: center;
+}
+
+.induction-case {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  margin-left: 2em;
+}
+
+.induction-case .stepper {
+  margin-left: 2em;
+}
+.induction-case-header {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5em;
+  align-items: center;
+  border-top: 1px dotted var(--cell-result-border);
+  padding-top: 0.5em;
+  margin-left: -1em;
+}
+
+.induction-case-hypothesis {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5em;
+  margin-left: 3em;
+  align-items: center;
+}
+
+.induction-case-patten {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5em;
+  align-items: center;
+}
+
+.stepper .subtle-button {
+  opacity: 0;
+  cursor: pointer;
+  border-radius: 2rem;
+  -webkit-transition: all 0.3s;
+  -moz-transition: all 0.3s;
+  -o-transition: all 0.3s;
+  -ms-transition: all 0.3s;
+  transition: all 0.3s;
+}
+
+.add-case-button {
+  margin-left: 2.5em;
+  color: --frame-4;
+}
+
+.stepper .subtle-button:hover {
+  opacity: 1;
+}
+
+.stepper .induction-case:hover .subtle-button {
+  opacity: 1;
+}
+
+*:hover > .subtle-button {
+  opacity: 1;
+}
+
+.inline-editor-wrapper {
+  background-color: var(--light-page-color);
+  padding: 0.2em 0.5em 0.2em 0.5em;
+  clip-path: polygon(
+    0.5em 0%,
+    calc(100% - 0.5em) 0%,
+    100% 50%,
+    calc(100% - 0.5em) 100%,
+    0.5em 100%,
+    0% 50%
+  );
+  border: 1px dotted var(--cell-result-border);
+}
+
+/* PROVER */
+
+.missing-step-overlay-align {
+  position: absolute;
+}
+
+.proof-context-box {
+  position: absolute;
+  top: calc(100% + 0.5em);
+  left: 2em;
+  z-index: var(--context-inspector-z);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.proof-selection-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5em;
+}
+
+.proof-button {
+  cursor: pointer;
+  pointer-events: all;
+  background-color: var(--surface-accent-strong);
+  color: var(--text-sunken) !important;
+  padding: 0.2em 0.5em;
+  border-radius: 0.2em;
+  white-space: nowrap;
+}
+
+.axiom-box {
+  background-color: var(--menu-bkg);
+  border-radius: 0 0 0.5em 0;
+  outline: 0.6px solid var(--menu-outline);
+  box-shadow: 0px 10px 20px var(--menu-shadow);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.axiom-row {
+  display: flex;
+  flex-direction: row;
+  gap: 1em;
+  align-items: center;
+}
+
+.rewrite-box {
+  background-color: var(--menu-bkg);
+  border-radius: 0 0 0.5em 0;
+  outline: 0.6px solid var(--menu-outline);
+  box-shadow: 0px 10px 20px var(--menu-shadow);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* STEPPER (OLD) */
+
+.stepper-justification {
+  width: 260px;
+}
+
+.step-expand,
+.step-back {
+  cursor: pointer;
+}
+
+.step-expand:hover span,
+.step-back:hover span {
+  display: none;
+}
+
+.step-expand:hover:before {
+  content: "↕";
+}
+
+.step-back:hover:before {
+  content: "←";
+}
+
+.substituted {
+  text-decoration: line-through;
+  color: var(--text-default);
+}
+
+/* TILES */
+
+.overlays .child-line {
+  /* To make it align to shard shadows */
+  translate: 0 0.02px;
+}
+
+.step-next > svg.shard > path,
+.step-next > svg.shard > path *:not(.EmptyHole *, .EmptyHole) {
+  fill: var(--step-next-fill) !important;
+  cursor: pointer;
+}
+.step-refl > svg.shard > path,
+.step-refl > svg.shard > path *:not(.EmptyHole *, .EmptyHole) {
+  fill: var(--exp-ap) !important;
+  cursor: pointer;
+}
+.step-taken > svg.shard > path,
+.step-taken > svg.shard > path *:not(.EmptyHole *, .EmptyHole) {
+  border: 1px var(--border-soft);
+  fill: var(--text-faint);
+}
+
+.step-next > svg > path.child-line {
+  stroke: var(--border-success-muted);
+}
+.step-taken > svg > path.child-line {
+  stroke: var(--border-soft);
+}
+.step-refl > svg > path.child-line {
+  stroke: var(--border-typ);
+}
+
+.step-next > svg.shard {
+  pointer-events: all;
+  cursor: pointer;
+  z-index: var(--stepper-interactive-z) !important;
+  filter: drop-shadow(1px 1px var(--shadow-success-muted)) !important;
+}
+.step-refl > svg.shard {
+  pointer-events: all;
+  cursor: pointer;
+  z-index: var(--stepper-interactive-z) !important;
+  filter: drop-shadow(1px 1px var(--shadow-typ)) !important;
+}
+.step-taken > svg.shard {
+  filter: drop-shadow(1px 1px var(--shadow-soft)) !important;
+}
+
+/* In high contrast the plate cannot carry the highlight on its own. The ink
+   sits at an extreme, so a fill far enough from the page to read as a
+   highlight is also close enough to the text to bury it; and a green fill on
+   a neutral page is no highlight at all to a reader who cannot see the hue.
+   So the plate stays beside the page (the Colors slide pins it per scheme)
+   and the highlight moves to a stroke, which costs the text on it nothing.
+
+   `--hazel-contrast` is published by the Colors slide for exactly this (see
+   ../README.md). Gating on it is what keeps the regular schemes pixel-identical. */
+@container style(--hazel-contrast: high) {
+  .step-next > svg.shard > path {
+    stroke: var(--border-success);
+    stroke-width: 1.5px;
+  }
+}
+
+.cell-result .code {
+  pointer-events: none;
+}
+
+/* STEPPER SETTINGS */
+
+.settings-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  max-width: 100%;
+  max-height: 100%;
+  background-color: var(--light-page-color);
+  border-radius: 0.4em;
+  z-index: var(--modal-z);
+  box-sizing: border-box;
+  padding: 1em;
+}
+
+.settings-modal-top {
+  justify-content: right;
+  display: flex;
+}
+
+.modal-back {
+  z-index: var(--modal-back-z);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--SHADOW);
+}
+
+.settings-toggle .toggle-switch {
+  margin-right: 1em;
+}
+
+.settings-toggle {
+  margin-bottom: 0.3em;
+}
+
+.settings-modal .icon:hover svg {
+  animation: wobble 0.6s ease 0s 1 normal forwards;
+  transform: scale(130%);
+  filter: brightness(1.1);
+}
+
+.settings-modal .icon {
+  cursor: pointer;
+  color: var(--text-muted);
+  height: 20px;
+  left: 7px;
+  bottom: 7px;
+}
+
+.settings-modal .icon svg {
+  fill: var(--text-muted);
+}
+
+.settings-modal .icon.disabled {
+  opacity: 0.35;
+}
+
+.settings-modal .icon.disabled:hover svg {
+  transform: scale(100%);
+  cursor: not-allowed;
+}
+
+.assumption-box {
+  display: flex;
+  flex-direction: row;
+  gap : 1em;
+  align-items: center;
+  margin-left: 2em;
+}
+
+.step-placeholder {
+  background-color: var(--test-panel-bkg)
+}

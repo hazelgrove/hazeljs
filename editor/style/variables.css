@@ -1,0 +1,57 @@
+/* Hand-written defaults: the things the theme does NOT own.
+
+   Type, timing and the z-index ladder are not colors, so the Colors slide has
+   no say in them. Every color default lives in theme-generated.css instead --
+   see README.md for why they are separate files.
+
+   The one color-adjacent line here is `color-scheme`, which is a real CSS
+   property rather than a custom one, so it has to be *used* somewhere; the
+   value it reads is generated. */
+:root {
+  /* Without this, native controls -- scrollbars, <select> popups, the caret
+     in text inputs -- render light on a dark editor: a page only gets dark
+     form controls by saying so. */
+  color-scheme: var(--hazel-color-scheme);
+
+  /* ── Type and timing ──────────────────────────────────────────────── */
+  --line-height: 1.45;
+  --base-font-size: 13pt;
+  --code-font: "Source Code Pro", monospace;
+  --ui-font: "Helvetica Neue";
+  --eval-recalc-visual-delay: 180ms;
+
+
+  /* ── Z-STACK ──────────────────────────────────────────────────────── */
+
+  /* BELOW CODE LEVEL */
+  --err-hole-arms-z: 1;
+  --tile-z: 2;
+  --err-hole-z: 3;
+  --warn-hole-z: 3;
+  --select-z: 4;
+  --stepper-interactive-z: 5;
+  --projector-underlay-z: 9;
+
+  /* AT CODE LEVEL */
+  --code-text-z: 10;
+  --projector-z: 10;
+
+  /* ABOVE CODE LEVEL */
+  --projector-indicated-z: 11;
+  --projector-hover-z: 12;
+  --caret-z: 20;
+  --line-number-z: 21;
+  --projector-overlay-z: 29;
+
+  /* TOP LEVEL UI */
+  --context-menu-z: 30; /* must be over num-samples badge */
+  --context-inspector-z: 30; /* keep below bottom bar */
+  --bottom-bar-z: 31;
+  --top-bar-z: 31;
+  --explainthis-expander-z: 31;
+  --top-bar-hover-z: 33;
+
+  /* HACKS */
+  --modal-back-z: 100;
+  --modal-z: 101;
+}
