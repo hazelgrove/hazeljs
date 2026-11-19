@@ -1,0 +1,66 @@
+/* TOGGLE */
+
+.toggle-switch,
+.toggle-switch .toggle-knob {
+  transition: margin 0.1s ease-in;
+}
+
+/* The off track carries the control's whole boundary: it sits on the bar with
+   no border, and the knob rides on it. --shard-exp used to fill it, which put
+   an editor surface under a chrome control -- fine on the one scheme that
+   existed, black on black once high contrast dark did. */
+.toggle-switch {
+  height: 1.2em;
+  width: 2em;
+  display: inline-block;
+  background-color: var(--toggle-track);
+  border-radius: 2em;
+  cursor: pointer;
+  box-shadow: inset 1px 1px 9px -3px var(--menu-shadow);
+  border: solid 1px transparent;
+}
+
+.toggle-switch:hover {
+  animation: wobble 0.4s ease 0s 1 normal none;
+}
+
+.toggle-switch .toggle-knob {
+  width: 0.9em;
+  height: 0.9em;
+  display: flex;
+  font-family: var(--ui-font);
+  background-color: var(--toggle-knob);
+  color: var(--text-muted);
+  /* the same ramp step the track is cut from, so the knob keeps an edge on
+     the active track too, whatever color that context gives it */
+  border: solid 1px var(--border-strong);
+  box-shadow: 0 1px 3px var(--menu-shadow);
+  border-radius: 1.5em;
+  margin: 1px 0.9em 1px 1px;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-switch.active {
+  background-color: var(--surface-shard-strong);
+  border: solid 1px transparent;
+}
+.toggle-switch.active .toggle-knob {
+  margin-left: 0.9em;
+  margin-right: 1px;
+}
+
+.submenu .toggle-switch {
+  height: 0.85em;
+  width: 1.5em;
+}
+
+.submenu .toggle-switch .toggle-knob {
+  width: 0.6em;
+  height: 0.6em;
+}
+
+.submenu .toggle-switch.active .toggle-knob {
+  margin-left: 0.7em;
+  margin-right: 1px;
+}
