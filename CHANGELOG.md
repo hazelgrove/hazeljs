@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.11 (2026-11-23)
+
+**Hazel on Jane Street Core** (Matthew, 2026-11-23, on porting the `hazeljs` branch to `dev`'s Core: "Yes, port now"). The `hazeljs` branch on hazelgrove/hazel ([#2857](https://github.com/hazelgrove/hazel/pull/2857)) now has `dev` as of `21da4ae66b`: the move to Jane Street Core (hazelgrove/hazel#2470 through #2477) and two small fixes after it, nothing else. Everything the branch adds was ported to Core with it: hazel-jit's compiler and its way to and from JavaScript, the library, programs of named modules, and the embed. The API is the same as 0.0.10's.
+
+- **A fix the port needed.** Core's `List.init` calls its function from the last index down, where OCaml's own went up from 0. `jit` reads a compiled tuple's labels back by the value at each index, using each label up once found, so in reverse it mixed up fields that JavaScript's `==` takes as equal: `(b = false, a = 0, c = 5)` came back as `{a: false, b: 0, c: 5}`. Fixed before this build (hazelgrove/hazel `98c482395d`), with a test.
+
+`hazel-lib.js` and `editor/` are built from hazelgrove/hazel at `98c482395d` (branch `hazeljs`), in one run of the **Build hazel-lib.js** workflow ([run 45242432003](https://github.com/hazelgrove/hazeljs/actions/runs/45242432003)). `hazel-lib.js` is byte for byte the file Hazel's own deploy of that commit serves ([run 45241590094](https://github.com/hazelgrove/hazel/actions/runs/45241590094)): SHA-256 `d87a978d424df06699bfca949a8529b3a8c716ecc95324c43c375ecb6295b817` without its `//# buildInfo` line. `editor/` is 68 files, 11.0 MB. Hazel's CI is green on that commit (formatting, strict warnings over its sources and tests, quick and full tests). Checked in Node against that build: `jit` and `compile` as the README shows them, and Gnome dig's rules through `jitProgram`, step for step the same as through `runProgram` for 20 steps.
+
+Not yet: an `SInt` is still checked at 32 bits. Its 64 bits come with hazelgrove/hazel#2828, which is on Core too.
+
 ## 0.0.10 (2026-11-23)
 
 **Hazel compiled to JavaScript, from the package** (Matthew, 2026-11-23: "have the latest hazel jit work too, so that hazel code can be parsed and jitted from the npm package API as well"), **and an editor that is offline and licensed throughout** ("use the PRs that replace font and logos so that they work offline and obey licensing terms for everything").
