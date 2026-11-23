@@ -90,6 +90,10 @@ rule({ tag: "Pull", value: 2 }); // { tag: "Flip", value: [2, { tag: "Done" }] }
 | `Hazel.run(text)` | `{ errors, value }`: the same, and the program's value. |
 | `Hazel.analyzeProgram(spec)` | `{ ok, errors, holes, programHoles, incomplete, programIncomplete, ms }`, for a program of named modules (below). |
 | `Hazel.runProgram(spec)` | The same, and `value`. |
+| `Hazel.compile(text)` | `{ errors, compiled, js, runtime, reason, ms }`: the program compiled to JavaScript by hazel-jit (below). |
+| `Hazel.jit(text)` | `{ errors, compiled, reason, value, ms }`: the program run compiled, its value as `run` gives it. |
+| `Hazel.compileProgram(spec)` | `analyzeProgram`'s fields, and `compile`'s. |
+| `Hazel.jitProgram(spec)` | `analyzeProgram`'s fields, and `jit`'s. |
 | `Hazel.version` | The library's own label, such as `"0.1 (draft, js-library)"`. |
 | `Hazel.build` | The hazelgrove/hazel commit this build is from. |
 
@@ -217,6 +221,28 @@ The game shows a room's errors in three places: under the room's box, by name, w
 ### Running anyway
 
 `runProgram` and `run` evaluate around errors and holes, as Hazel always does, so `value` is there even when `ok` is false. But where an error or a hole stopped the evaluation, the value comes back as `{ hazel: "…" }`, a printout of the term it stopped at, and a page cannot act on that. Messed Up Dress Up keeps answering with its own JavaScript while a room's rule is not `ok`, and logs Hazel's answer beside it, so the game keeps working while the rule is fixed. For more, see the game's [Game Scripts Guide](https://matthewhammer.org/kids-choice-games/dress-up/reports/017/#ch8), section 8, on broken scripts.
+
+## Compiled to JavaScript
+
+Since 0.0.10 the package can compile a program to JavaScript with hazel-jit, Hazel's compiler from a program to JS, and run it compiled. `jit` is a drop-in for `run`:
+
+```js
+const { value, compiled, reason } = Hazel.jit(`
+  let sq : Int -> Int = fun x -> x * x in
+  let sum_sq : [Int] -> Int = fun xs ->
+    case xs
+    | [] => 0
+    | x :: rest => sq(x) + sum_sq(rest)
+    end in
+  (sq = sq, sum_sq = sum_sq)`);
+value.sum_sq([1, 2, 3]); // 14, computed by the compiled code
+```
+
+- **Values are the ones `run` gives.** A function the compiled code made stays compiled, and its arguments are read by the type it declares, as with `run`.
+- **The interpreter covers what the compiled code can't.** If a call can't finish compiled (dividing by zero, something indeterminate), Hazel's interpreter runs it and its answer is returned. If hazel-jit doesn't compile some form at all (a hole, a test), `compiled` is `false`, `reason` names the form, and `value` is the interpreter's.
+- **Ahead of time.** `compile` returns the JavaScript itself. `js` is the body of a function of `$R`, and `runtime` is the source of the object to pass as `$R`, so `new Function("$R", js)(eval("(" + runtime + ")"))` is the program's value. That value comes in hazel-jit's own shapes: a list is `null` or `{h, t}`, a constructor `{c, v}`, a tuple an array with its labels also as keys. Keep the two strings in a file and the page runs the program without loading Hazel. The games in [hazeljs-examples](https://matthewhammer.org/hazeljs-examples/) do this with their `compiled.js` files.
+- **How fast.** For [Gnome dig](https://matthewhammer.org/hazeljs-examples/dig/)'s rules (`jitProgram`, in Node), one step of the game takes 87 ms interpreted and 1.4 ms through `jit`, and the two agree step for step. Most of that 1.4 ms is spent converting the game's state between this library's shapes and hazel-jit's, both ways, on every call. Keep hazel-jit's shapes (with `compile`) and a step takes 0.045 ms, which is what the game's own page does.
+- **What compiles.** Everything but holes, tests, the stepper's filters and a few other forms; `reason` says which form stopped it. An `SInt` is checked at 32 bits for now; 64 bits will come with hazelgrove/hazel#2828.
 
 ## Hazel's own editor, beside your page
 

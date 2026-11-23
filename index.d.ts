@@ -89,6 +89,48 @@ export interface ProgramResult extends ProgramAnalysis {
   value: HazelValue;
 }
 
+/**
+ * Whether hazel-jit compiled the program (since 0.0.10). When it did not
+ * (a hole, a test, another form it does not compile), `reason` says why,
+ * and `jit`'s value is the interpreter's, as `run` gives it.
+ */
+export interface Compiled {
+  compiled: boolean;
+  reason?: string;
+}
+
+/**
+ * hazel-jit's JavaScript for a program (since 0.0.10): `js` is the body of a
+ * function of one argument, `$R`, and `runtime` the source of the object to
+ * pass as `$R`, so
+ * `new Function("$R", js)(eval("(" + runtime + ")"))` is the program's
+ * value, in hazel-jit's own shapes: a list is `null` or `{h, t}`, a
+ * constructor `{c, v}`, a tuple an array that also has its labels as keys.
+ * Keep the two strings in a file to run the program without Hazel.
+ */
+export interface Compilation extends Compiled {
+  js?: string;
+  runtime?: string;
+}
+
+export interface CompileResult extends Analysis, Compilation {
+  ms: number;
+}
+
+/**
+ * A program run compiled (since 0.0.10), its value in the same shapes as
+ * `run`'s. A function the compiled code made stays compiled; a call it
+ * cannot finish (an invalid operation, something indeterminate) is run by
+ * the interpreter, whose answer it gives.
+ */
+export interface JitResult extends Result, Compiled {
+  ms: number;
+}
+
+export interface ProgramCompileResult extends ProgramAnalysis, Compilation {}
+
+export interface ProgramJitResult extends ProgramResult, Compiled {}
+
 export interface HazelLib {
   /** The library's own label, for example "0.1 (draft, js-library)". */
   version: string;
@@ -98,6 +140,12 @@ export interface HazelLib {
   run(text: string): Result;
   analyzeProgram(spec: ProgramSpec): ProgramAnalysis;
   runProgram(spec: ProgramSpec): ProgramResult;
+  /** hazel-jit's JavaScript for a program, and its runtime (since 0.0.10). */
+  compile(text: string): CompileResult;
+  /** A program compiled and run compiled (since 0.0.10). */
+  jit(text: string): JitResult;
+  compileProgram(spec: ProgramSpec): ProgramCompileResult;
+  jitProgram(spec: ProgramSpec): ProgramJitResult;
 }
 
 declare const Hazel: HazelLib;
@@ -108,3 +156,7 @@ export declare const analyze: HazelLib["analyze"];
 export declare const run: HazelLib["run"];
 export declare const analyzeProgram: HazelLib["analyzeProgram"];
 export declare const runProgram: HazelLib["runProgram"];
+export declare const compile: HazelLib["compile"];
+export declare const jit: HazelLib["jit"];
+export declare const compileProgram: HazelLib["compileProgram"];
+export declare const jitProgram: HazelLib["jitProgram"];
