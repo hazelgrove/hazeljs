@@ -50124,7 +50124,7 @@ Function("$R",a)(b)}(cU(k),d),l=amj([0,a[2],a[3],a[4]],0,f)}catch(f){var
 g=be(f),h=fby(g),j=h?dv(h[1].message):pe(g);return e(j)}return[0,[0,e_G,!!1],[0,[0,e_F,l],0]]}function
 amk(a){return[0,e_H,rB(0)-a]}function
 aVR(a,b){var
-c=[0,amk(b),0],d=a?[0,[0,e_I,j$],0]:0,e=p(d,c);return kp(p([0,[0,e_M,BL(e_L)],[0,[0,e_K,!!0],[0,[0,e_J,Zm],0]]],e))}em["Hazel"]={version:"0.1 (draft, js-library)",build:"29042429f0ec96120230f19da76f80986e267731",analyze:jY(function(a){var
+c=[0,amk(b),0],d=a?[0,[0,e_I,j$],0]:0,e=p(d,c);return kp(p([0,[0,e_M,BL(e_L)],[0,[0,e_K,!!0],[0,[0,e_J,Zm],0]]],e))}em["Hazel"]={version:"0.1 (draft, js-library)",build:"7274df28a5af7d7403a1e23f82de257c72413d06",analyze:jY(function(a){var
 b=Wu(dv(a));return b?kp([0,[0,e94,BL(Wv(b[1])[1])],0]):kp([0,[0,e96,BL(e95)],0])}),run:jY(function(a){var
 b=Wu(dv(a));if(!b)return kp([0,[0,e9$,BL(e9_)],[0,[0,e99,j$],0]]);var
 c=Wv(b[1]),d=c[1],e=[0,[0,e97,rA(ND(c[2]))],0];return kp([0,[0,e98,BL(d)],e])}),analyzeProgram:jY(function(a){var

@@ -49,7 +49,7 @@
     "node": ">=18"
   },
   "hazel": {
-    "commit": "29042429f0ec96120230f19da76f80986e267731",
+    "commit": "7274df28a5af7d7403a1e23f82de257c72413d06",
     "branch": "hazeljs",
     "pr": "https://github.com/hazelgrove/hazel/pull/2857"
   }
