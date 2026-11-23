@@ -36,6 +36,8 @@ chmod 644 "$pkg/hazel-lib.js"
 if [ "${EDITOR:-}" = 1 ]; then
   rm -rf "$pkg/editor"
   cp -rL "$hazel/_build/default/src/web/www" "$pkg/editor"
+  # (dune's build outputs are read-only, and so is a copy of them)
+  chmod -R u+w "$pkg/editor"
   rm -f "$pkg/editor/hazel-lib.js"
   # (what a frame never loads: the build's own files, the bundler's input, a style note, and the tutorial's intro video)
   rm -f "$pkg/editor/dune" "$pkg/editor/prebundle.js" "$pkg/editor/style/README.md" "$pkg/editor/img/hazel-probes-intro.mp4"
@@ -44,10 +46,10 @@ if [ "${EDITOR:-}" = 1 ]; then
   # names an outside address (comments aside)
   node -e '
     const fs = require("fs"), path = require("path"), dir = process.argv[1], page = path.join(dir, "index.html");
-    let s = fs.readFileSync(page, "utf8");
-    s = s.replace(/\s*<link rel="preconnect" href="https:\/\/fonts\.gstatic\.com\/"[^>]*>/, "")
+    const was = fs.readFileSync(page, "utf8");
+    const s = was.replace(/\s*<link rel="preconnect" href="https:\/\/fonts\.gstatic\.com\/"[^>]*>/, "")
          .replace(/\s*<link\s+href="https:\/\/fonts\.googleapis\.com\/[^"]*"\s+rel="stylesheet"\s*\/?>/, "");
-    fs.writeFileSync(page, s);
+    if (s !== was) fs.writeFileSync(page, s);
     const outside = f => /(?:src|href)\s*=\s*["\x27]?https?:|url\(\s*["\x27]?https?:|@import\s+(?:url\()?["\x27]?https?:/i
       .test(fs.readFileSync(f, "utf8").replace(/<!--[\s\S]*?-->|\/\*[\s\S]*?\*\//g, ""));
     const walk = d => fs.readdirSync(d, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]);
