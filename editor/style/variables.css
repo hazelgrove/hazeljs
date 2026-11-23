@@ -17,7 +17,10 @@
   --line-height: 1.45;
   --base-font-size: 13pt;
   --code-font: "Source Code Pro", monospace;
-  --ui-font: "Helvetica Neue";
+  /* The interface's font: IBM Plex Sans, shipped with Hazel (style/fonts.css)
+     under the SIL Open Font License, so it looks the same everywhere. A
+     character outside its Latin subset comes from the reader's sans-serif. */
+  --ui-font: "IBM Plex Sans", sans-serif;
   --eval-recalc-visual-delay: 180ms;
 
 
@@ -42,6 +45,11 @@
   --caret-z: 20;
   --line-number-z: 21;
   --projector-overlay-z: 29;
+  /* Proof rows nested in a proof result. Each proof's .cell-result is an
+     isolated stacking context, so these only order rows within one proof and
+     never reach the TOP LEVEL UI below, despite the larger numbers. */
+  --proof-step-raised-z: calc(var(--projector-overlay-z) + 1);
+  --proof-step-panel-z: calc(var(--projector-overlay-z) + 2);
 
   /* TOP LEVEL UI */
   --context-menu-z: 30; /* must be over num-samples badge */
