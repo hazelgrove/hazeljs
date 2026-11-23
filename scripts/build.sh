@@ -38,6 +38,8 @@ if [ "${EDITOR:-}" = 1 ]; then
   cp -rL "$hazel/_build/default/src/web/www" "$pkg/editor"
   # (dune's build outputs are read-only, and so is a copy of them)
   chmod -R u+w "$pkg/editor"
+  # the licenses of what the editor ships that is not Hazel's own (its fonts, its icons), which go with them
+  cp -r "$hazel/licenses" "$pkg/editor/licenses"
   rm -f "$pkg/editor/hazel-lib.js"
   # (what a frame never loads: the build's own files, the bundler's input, a style note, and the tutorial's intro video)
   rm -f "$pkg/editor/dune" "$pkg/editor/prebundle.js" "$pkg/editor/style/README.md" "$pkg/editor/img/hazel-probes-intro.mp4"
