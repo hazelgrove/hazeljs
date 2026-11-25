@@ -104,9 +104,11 @@ export interface Compiled {
  * function of one argument, `$R`, and `runtime` the source of the object to
  * pass as `$R`, so
  * `new Function("$R", js)(eval("(" + runtime + ")"))` is the program's
- * value, in hazel-jit's own shapes: a list is `null` or `{h, t}`, a
- * constructor `{c, v}`, a tuple an array that also has its labels as keys.
- * Keep the two strings in a file to run the program without Hazel.
+ * value, in hazel-jit's own shapes (since 0.0.13): a tuple whose every
+ * entry is labeled is a plain object by its labels, any other tuple an
+ * array, a list is `null` or a cell `{$h, $t}`, and a constructor
+ * `{$c, $v}`. Keep the two strings in a file to run the program without
+ * Hazel.
  */
 export interface Compilation extends Compiled {
   js?: string;
@@ -121,7 +123,9 @@ export interface CompileResult extends Analysis, Compilation {
  * A program run compiled (since 0.0.10), its value in the same shapes as
  * `run`'s. A function the compiled code made stays compiled; a call it
  * cannot finish (an invalid operation, something indeterminate) is run by
- * the interpreter, whose answer it gives.
+ * the interpreter, whose answer it gives. What a page gives a compiled
+ * function, and what it gets back, the page does not change afterwards:
+ * make a changed copy instead (see `development`).
  */
 export interface JitResult extends Result, Compiled {
   ms: number;
@@ -146,6 +150,14 @@ export interface HazelLib {
   jit(text: string): JitResult;
   compileProgram(spec: ProgramSpec): ProgramCompileResult;
   jitProgram(spec: ProgramSpec): ProgramJitResult;
+  /**
+   * While on, what a page gives a compiled function and what it gets back
+   * are frozen, all the way down, so a page that changes one throws where
+   * it does (in strict code) rather than getting a wrong answer later.
+   * Returns `on`. Off unless turned on: freezing walks every value that
+   * crosses. Since 0.0.13.
+   */
+  development(on: boolean): boolean;
 }
 
 declare const Hazel: HazelLib;
@@ -160,3 +172,4 @@ export declare const compile: HazelLib["compile"];
 export declare const jit: HazelLib["jit"];
 export declare const compileProgram: HazelLib["compileProgram"];
 export declare const jitProgram: HazelLib["jitProgram"];
+export declare const development: HazelLib["development"];

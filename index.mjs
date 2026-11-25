@@ -2,4 +2,4 @@
 // export and as named exports.
 import Hazel from "./index.js";
 export default Hazel;
-export const { version, build, analyze, run, analyzeProgram, runProgram, compile, jit, compileProgram, jitProgram } = Hazel;
+export const { version, build, analyze, run, analyzeProgram, runProgram, compile, jit, compileProgram, jitProgram, development } = Hazel;

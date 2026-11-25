@@ -15,7 +15,7 @@ const double = Hazel.run("fun (x : Int) -> x * 2").value;
 double(21); // 42
 ```
 
-> **Experimental.** This is a prototype (0.0.x): the API may change in any release. It is built from the draft library in [hazelgrove/hazel#2711](https://github.com/hazelgrove/hazel/pull/2711) and [#2719](https://github.com/hazelgrove/hazel/pull/2719), with the editable embed of [#2814](https://github.com/hazelgrove/hazel/pull/2814), on Hazel's branch `hazeljs-editor` at commit `7fcf33f33a` (`Hazel.build` names it).
+> **Experimental.** This is a prototype (0.0.x): the API may change in any release. It is built from Hazel's branch `hazeljs` ([hazelgrove/hazel#2857](https://github.com/hazelgrove/hazel/pull/2857)) at commit `20febee548` (`Hazel.build` names it). That branch holds the draft library of [#2711](https://github.com/hazelgrove/hazel/pull/2711) and [#2719](https://github.com/hazelgrove/hazel/pull/2719), the editable embed of [#2814](https://github.com/hazelgrove/hazel/pull/2814), and hazel-jit, Hazel's compiler to JavaScript ([#2859](https://github.com/hazelgrove/hazel/pull/2859)).
 
 ## Why
 
@@ -238,22 +238,23 @@ const { value, compiled, reason } = Hazel.jit(`
 value.sum_sq([1, 2, 3]); // 14, computed by the compiled code
 ```
 
-- **Values are the ones `run` gives.** A function the compiled code made stays compiled, and its arguments are read by the type it declares, as with `run`.
+- **Values are the ones `run` gives.** A function the compiled code made stays compiled. Its arguments are read by the type it declares, straight into the compiled code's shapes, and its answer comes back the same way, with no Hazel values made on the way.
+- **Don't change what crosses.** What your page gives a compiled function, and what it gets back, the page does not change afterwards, as React has it for state. Make a changed copy instead: `{...state, x: 2}`, `[...xs, 5]`. The library keeps a record of plain values as your page's own object, and remembers what it converted, so changing one would change a Hazel value under the compiled code. While you develop, `Hazel.development(true)` freezes everything that crosses, all the way down, so a change throws where it happens (in strict code) instead of giving a wrong answer later. It is off unless you turn it on, since freezing walks every value that crosses. Since 0.0.13.
 - **The interpreter covers what the compiled code can't.** If a call can't finish compiled (dividing by zero, something indeterminate), Hazel's interpreter runs it and its answer is returned. If hazel-jit doesn't compile some form at all (a hole, a test), `compiled` is `false`, `reason` names the form, and `value` is the interpreter's.
-- **Ahead of time.** `compile` returns the JavaScript itself. `js` is the body of a function of `$R`, and `runtime` is the source of the object to pass as `$R`, so `new Function("$R", js)(eval("(" + runtime + ")"))` is the program's value. That value comes in hazel-jit's own shapes: a list is `null` or `{h, t}`, a constructor `{c, v}`, a tuple an array with its labels also as keys. Keep the two strings in a file and the page runs the program without loading Hazel. The games in [hazeljs-examples](https://matthewhammer.org/hazeljs-examples/) do this with their `compiled.js` files.
-- **How fast.** For [Gnome dig](https://matthewhammer.org/hazeljs-examples/dig/)'s rules (`jitProgram`, in Node), one step of the game takes 87 ms interpreted and 1.4 ms through `jit`, and the two agree step for step. Most of that 1.4 ms is spent converting the game's state between this library's shapes and hazel-jit's, both ways, on every call. Keep hazel-jit's shapes (with `compile`) and a step takes 0.045 ms, which is what the game's own page does.
+- **Ahead of time.** `compile` returns the JavaScript itself. `js` is the body of a function of `$R`, and `runtime` is the source of the object to pass as `$R`, so `new Function("$R", js)(eval("(" + runtime + ")"))` is the program's value. That value comes in hazel-jit's own shapes: a tuple whose every entry is labeled is a plain object, `{x: 1, y: 2}`; any other tuple is an array; a list is `null` or a cell `{$h, $t}`; and a constructor is `{$c, $v}`, as `{$c: "Some", $v: 3}`. These changed in 0.0.13 (records were arrays, and the keys had no `$`), so a page that keeps compiled code with its own converters changes them when it compiles again. Keep the two strings in a file and the page runs the program without loading Hazel. The games in [hazeljs-examples](https://matthewhammer.org/hazeljs-examples/) do this with their `compiled.js` files.
+- **How fast.** For [Gnome dig](https://matthewhammer.org/hazeljs-examples/dig/)'s rules (`jitProgram`, in Node 22 on a laptop), one step of the game takes 82 ms interpreted and 0.28 ms through `jit`, and the two agree step for step for 20 steps. On the games of [hazeljs-examples](https://matthewhammer.org/hazeljs-examples/), each played through its own run of states, a call through `jit` takes 0.48 of the time of the game's own ahead-of-time `compiled.js` (the geometric mean over 14 games, [report 54](https://matthewhammer.org/hazel/reports/054/#records-tried)).
 - **What compiles.** Everything but holes, tests, the stepper's filters and a few other forms; `reason` says which form stopped it. An `SInt` is checked at 32 bits for now; 64 bits will come with hazelgrove/hazel#2828.
 
 ## Hazel's own editor, beside your page
 
 The library holds no editor: you bring the box. The apps under [Examples](#examples) show their Hazel in Hazel's own tile editor instead of a text area. Each module is in a frame of Hazel's app, in its editable embed mode. The page and its frames talk by `postMessage`:
 
-**The editor is in the package** (since 0.0.9, [hazelgrove/hazeljs#2](https://github.com/hazelgrove/hazeljs/issues/2)): `editor/`, Hazel's app (78 files, 11 MB), built from the same commit of Hazel as `hazel-lib.js`. Nothing loads from anywhere else: the editor's scripts, styles, fonts and images all come from the package, beside `hazel-listings.js`, wherever you load it from. An npm CDN serves files, not pages (jsDelivr sends `.html` as plain text), so `hazel-listings.js` makes each frame's page itself: it reads `editor/index.html`, adds a `<base>` at `editor/`, and frames it from a `blob:` address. A `blob:` page has your page's origin, so the frame takes your page's messages on any site. Before 0.0.9, the frame came from a build of Hazel's `embed-editable` branch at `https://build.hazel.org/embed-editable/`, which took messages only from a few sites.
+**The editor is in the package** (since 0.0.9, [hazelgrove/hazeljs#2](https://github.com/hazelgrove/hazeljs/issues/2)): `editor/`, Hazel's app (68 files, 11 MB), built from the same commit of Hazel as `hazel-lib.js`. Nothing loads from anywhere else: the editor's scripts, styles, fonts and images all come from the package, beside `hazel-listings.js`, wherever you load it from. An npm CDN serves files, not pages (jsDelivr sends `.html` as plain text), so `hazel-listings.js` makes each frame's page itself: it reads `editor/index.html`, adds a `<base>` at `editor/`, and frames it from a `blob:` address. A `blob:` page has your page's origin, so the frame takes your page's messages on any site. Before 0.0.9, the frame came from a build of Hazel's `embed-editable` branch at `https://build.hazel.org/embed-editable/`, which took messages only from a few sites.
 
 - The page sends a frame the whole program (`{type: "set", preamble, modules, tail}`) and the module it shows (`{type: "focus", module}`).
 - The frame sends each edit's text (`{type: "edit", text}`), the program's errors and holes, by module (`{type: "status", ...}`), and a go to definition it cannot answer itself (`{type: "goto", name}`), for a name defined in another module.
 
-After each edit, the page sends the new program to the other frames and builds it again with `runProgram`. The protocol in full is in Hazel's [docs/hazel-as-a-js-library.md](https://github.com/hazelgrove/hazel/blob/hazeljs-editor/docs/hazel-as-a-js-library.md), on the branch the editor is built from, `hazeljs-editor`.
+After each edit, the page sends the new program to the other frames and builds it again with `runProgram`. The protocol in full is in Hazel's [docs/hazel-as-a-js-library.md](https://github.com/hazelgrove/hazel/blob/hazeljs/docs/hazel-as-a-js-library.md), on the branch the editor is built from, `hazeljs`.
 
 ### Listings in an article
 
@@ -339,13 +340,13 @@ An older phone runs the same JavaScript several times slower than a laptop. Thes
 - **Keep calls few and large.** Every call is interpreted: a cast took 0.4 to 1.2 ms, a ten-card deal about 50 ms. Make one call for a user's action, not one for each thing drawn.
 - **Open Hazel's editor only when asked.** Each listing's editor is a whole Hazel app, about 7 MB of JavaScript and some 50 MB of memory. Five on one page made the older phone slow at everything, key presses included (Firefox on Android may run the frames on the page's own thread). Start the listings as text, with the editors a button away ([listings](#listings-in-an-article)).
 - **Measure on the device.** Each oracle's ⚙️ Advanced has a speed measurement: the same work on any device, and one line to paste and compare ([`shared/advanced.js`](https://github.com/matthewhammer/hazeljs-oracles/blob/main/shared/advanced.js)).
-- **Later: compiled ahead of time.** hazel-jit, a prototype compiler from Hazel to JavaScript (not part of this package), could compile an app's Hazel when its site is built, so a page would load neither the library nor the build; [report 54](https://matthewhammer.org/hazel/reports/054/#ahead) has the plan.
+- **Compile it ahead of time.** Since 0.0.10, `compile` gives a program's JavaScript, which a site can make when it is built, so its pages load neither the library nor the editor ([Compiled to JavaScript](#compiled-to-javascript)); [report 54](https://matthewhammer.org/hazel/reports/054/#ahead) has the plan.
 
 ## Is it really Hazel?
 
 `hazel-lib.js` is 2.8 MB of compiled JavaScript, so reading it tells you little. What you can check is that it is exactly what Hazel's source compiles to, at a commit you can read.
 
-**It names its commit.** `Hazel.build` returns the hazelgrove/hazel commit it was built from, and the `hazel` field of `package.json` names the same commit, with its branch and pull request. For this release that is `7fcf33f33a9baaf787fb2fec689c828f89b0fbed`, on Hazel's branch `hazeljs-editor`.
+**It names its commit.** `Hazel.build` returns the hazelgrove/hazel commit it was built from, and the `hazel` field of `package.json` names the same commit, with its branch and pull request. For this release that is `20febee54854294d799bb92ec74e23360d02f2c1`, on Hazel's branch `hazeljs` ([hazelgrove/hazel#2857](https://github.com/hazelgrove/hazel/pull/2857)).
 
 **Rebuild it and compare.** With a clone of [hazelgrove/hazel](https://github.com/hazelgrove/hazel) and its toolchain set up (see its README), run
 
@@ -353,20 +354,20 @@ An older phone runs the same JavaScript several times slower than a laptop. Thes
 scripts/verify-build.sh path/to/hazel
 ```
 
-It checks out that commit, builds `hazel-lib.js` the way Hazel's own Deploy workflow does (the release profile, with `GITHUB_SHA` set to the commit), and compares the two files. Every byte must match except one comment line, `//# buildInfo:`, where js_of_ocaml names its own version label (`5.9.1` from one install, `5.9.1+5.9.1` from Hazel's lock file). Without that line, this release's file has the SHA-256 `24d531633f54ead440689d6d49014880662d44a97eb48d1f559470d56a771074`. Built on GitHub's machines, as this release's was, it matches with that line too.
+It checks out that commit, builds `hazel-lib.js` the way Hazel's own Deploy workflow does (the release profile, with `GITHUB_SHA` set to the commit), and compares the two files. Every byte must match except one comment line, `//# buildInfo:`, where js_of_ocaml names its own version label (`5.9.1` from one install, `5.9.1+5.9.1` from Hazel's lock file). Without that line, this release's file has the SHA-256 `88517864eb3107ac224d699e2984159a87c79b3c5b593a14ac4b864f8c6bd56b`. Built on GitHub's machines, as this release's was, it matches with that line too.
 
 **How a release's file is made.** `scripts/build.sh path/to/hazel COMMIT` builds `hazel-lib.js` from that commit the same way and records the commit in `package.json`. The **Build hazel-lib.js** workflow runs it on GitHub's machines and pushes the result to a branch `build/<commit>`, so a release's file is built where anyone can see it.
 
 **Or let GitHub rebuild it.** This repository's **Verify hazel-lib.js** workflow runs the same script on GitHub's machines, from a fresh clone of Hazel. Anyone can run it from the Actions tab, and its runs are public.
 
-**Hazel's own CI built it too.** Hazel's Deploy workflow builds every commit pushed to hazelgrove/hazel. Its build of this commit ([run 44565698736](https://github.com/hazelgrove/hazel/actions/runs/44565698736)) is this release's file, byte for byte. That build is served at `https://build.hazel.org/hazeljs-editor/hazel-lib.js` only until the branch gets a newer commit:
+**Hazel's own CI built it too.** Hazel's Deploy workflow builds every commit pushed to hazelgrove/hazel. Its build of this commit ([run 45540086629](https://github.com/hazelgrove/hazel/actions/runs/45540086629)) is this release's file, byte for byte. That build is served at `https://build.hazel.org/hazeljs/hazel-lib.js` only until the branch gets a newer commit:
 
 ```sh
-curl -sL https://build.hazel.org/hazeljs-editor/hazel-lib.js | grep -v '^//# buildInfo:' | sha256sum
+curl -sL https://build.hazel.org/hazeljs/hazel-lib.js | grep -v '^//# buildInfo:' | sha256sum
 grep -v '^//# buildInfo:' node_modules/hazeljs/hazel-lib.js | sha256sum
 ```
 
-**The editor, too.** The same workflow run builds `editor/` from the same commit (`EDITOR=1 scripts/build.sh`). Hazel's deploy of that commit serves the same 78 files at `https://build.hazel.org/hazeljs-editor/`, byte for byte, except two: `index.html`, where the build takes out the page's one outside link (Google's Material Icons stylesheet, for a command palette embed mode never shows), and `hazel.js`, which names the directory the OCaml standard library was in on the build machine (`/home/runner/work/hazeljs/...` against `/home/runner/work/hazel/...`, 4 bytes). `scripts/verify-build.sh` checks `hazel-lib.js` only, not yet `editor/`.
+**The editor, too.** The same workflow run builds `editor/` from the same commit (`EDITOR=1 scripts/build.sh`): Hazel's app, 68 files of it, the same ones Hazel's deploy of that commit serves at `https://build.hazel.org/hazeljs/`. `scripts/verify-build.sh` checks `hazel-lib.js` only, not yet `editor/`.
 
 What this shows is where the file came from. It is that commit of Hazel, compiled by the OCaml toolchain in Hazel's lock file, and nothing else. It does not show that the code at that commit does what you want; for that, read it, or trust the people who wrote it.
 
@@ -377,7 +378,7 @@ What this shows is where the file came from. It is that commit of Hazel, compile
 - **One global.** The library puts one `Hazel` object on the global object.
 - **A console line for slow reads.** A text that only Hazel's slower, recovering parser can read (an unclosed bracket, such as `let x = (`) prints a `SLOW PARSE (...)` line to the console when it is read.
 - **No undo or redo.** The library holds no editor: it reads the text you give it and answers. Undo and redo are part of Hazel's editor, not of this library, so the page that holds the text keeps its history: keep the texts (or each module's text) it has had, and pass an older one again to go back. Going back costs what an edit does: the modules whose text changed since the last call are read again, and the others are not.
-- **The editor is most of the package.** `editor/` is Hazel's whole app, 11 MB of the package's 14, though a page loads it only when a listing's editor starts, and only about 8 MB of it. It comes from a branch of Hazel, `hazeljs-editor`, not yet from `dev` ([hazelgrove/hazeljs#2](https://github.com/hazelgrove/hazeljs/issues/2)).
+- **The editor is most of the package.** `editor/` is Hazel's whole app, 11 MB of the package's 14, though a page loads it only when a listing's editor starts, and only about 8 MB of it. It comes from a branch of Hazel, `hazeljs` ([hazelgrove/hazel#2857](https://github.com/hazelgrove/hazel/pull/2857)), not yet from `dev`.
 - **One app per listing.** Each listing's frame starts a whole Hazel app, one after another, so a page with many listings takes a while to start them all, and an older phone may not cope; starting them as text ([listings](#listings-in-an-article)) starts the editors only when asked.
 - **Errors name a term, not a place.** An error's `id` is the id of its term in Hazel's syntax tree; the library gives no line and column for it yet.
 - **A stuck value is a debug printout.** Where an error or a hole stopped the evaluation, `{ hazel }` holds an OCaml printout of the term, not Hazel syntax.
