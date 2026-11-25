@@ -2,26 +2,46 @@
 
 # hazeljs
 
-**Hazel edit boxes that extend ordinary JavaScript programs with custom behavior.**
+**[Hazel](https://hazel.org) as a JavaScript library: run Hazel programs in a page or in Node, finished or not, compiled to JavaScript when they are complete, and call their functions from JavaScript.**
 
-You bring the box, a text area or your own editor; hazeljs type-checks what is typed in it, says what is wrong and where, and runs it, even while it is unfinished.
-
-[Hazel](https://hazel.org), the typed functional programming language with holes, as a JavaScript library. Analyze and run Hazel programs from Node or a web page, and call the functions they define from JavaScript.
+Hazel is a typed functional language with holes: it type-checks and runs a program that is not finished, around its holes and errors. That makes it a good language for the parts of an app that people write and change while it runs: rules, scripts, exercises, a game's logic. hazeljs gives a page Hazel's interpreter, hazel-jit (Hazel's compiler to JavaScript), and Hazel's own editor.
 
 ```js
 const Hazel = require("hazeljs");
 
-const double = Hazel.run("fun (x : Int) -> x * 2").value;
-double(21); // 42
+const { value: area } = Hazel.jit(`
+  type Shape = + Circle(Float) + Rect(Float, Float) in
+  fun s : Shape -> case s | Circle(r) => 3.14159 *. r *. r | Rect(w, h) => w *. h end`);
+
+area({ tag: "Rect", value: [2, 3] }); // 6, computed by compiled JavaScript
 ```
 
-> **Experimental.** This is a prototype (0.0.x): the API may change in any release. It is built from Hazel's branch `hazeljs` ([hazelgrove/hazel#2857](https://github.com/hazelgrove/hazel/pull/2857)) at commit `20febee548` (`Hazel.build` names it). That branch holds the draft library of [#2711](https://github.com/hazelgrove/hazel/pull/2711) and [#2719](https://github.com/hazelgrove/hazel/pull/2719), the editable embed of [#2814](https://github.com/hazelgrove/hazel/pull/2814), and hazel-jit, Hazel's compiler to JavaScript ([#2859](https://github.com/hazelgrove/hazel/pull/2859)).
+> **Experimental.** A prototype (0.0.x): the API may change in any release. Built from Hazel's branch `hazeljs` ([hazelgrove/hazel#2857](https://github.com/hazelgrove/hazel/pull/2857)) at commit `2c4a61560f` (`Hazel.build` names it), which holds the library ([#2711](https://github.com/hazelgrove/hazel/pull/2711), [#2719](https://github.com/hazelgrove/hazel/pull/2719)), the editable embed ([#2814](https://github.com/hazelgrove/hazel/pull/2814)) and hazel-jit ([#2859](https://github.com/hazelgrove/hazel/pull/2859)).
 
-## Why
+## What it does
 
-Hazel type-checks and runs programs that are not finished: a program with holes or type errors still runs, around them. That makes it a good language for code a page lets people write and change while it runs: rules, scripts, exercises.
+- **Runs unfinished programs.** `Hazel.run` and `Hazel.runProgram` type-check a program and run it with Hazel's interpreter, holes and errors included, and report what is wrong as data: each error with its module, each module's holes, anything left open.
+- **Compiles finished ones.** `Hazel.jit` and `Hazel.jitProgram` compile a complete program to JavaScript in the page and run that. Where hazel-jit can't (a hole, a test, an error the interpreter would show), the interpreter runs it, so the answer is the same either way. `Hazel.compile` gives the JavaScript itself, to keep in a file and run without loading Hazel at all.
+- **Calls both ways.** A Hazel function is a JavaScript function. Values cross by the types the function declares: records as objects, lists as arrays, constructors as `{tag, value}`.
+- **Hazel's own editor, beside your page.** `hazel-listings.js` turns each `<pre class="hazel">` into Hazel's tile editor, with go to definition across listings, all from the package, offline.
 
-We call a JavaScript program whose event handlers are Hazel functions a **Hazlet**: the page calls a Hazel function with each event and acts on what it returns. The first is a game, [Messed Up Dress Up](https://matthewhammer.org/kids-choice-games/dress-up/), and the second a [Petri net simulator](https://matthewhammer.org/hazeljs-petri-example/); both are below, under [Examples](#examples), with pictures.
+## How fast
+
+**On the games of [hazeljs-examples](https://matthewhammer.org/hazeljs-examples/), hazel-jit runs the games' rules 4,211 times as fast as Hazel's interpreter, 2.9 times as fast as hazel-jit did a week earlier, and takes 4.4 times the time of the same game written by hand in JavaScript.** Each game played through its own run of states, as its page plays it, every answer the same all four ways (the geometric mean over 14 games; plain JavaScript for the five games that have a version written by hand).
+
+The five games with all four ways, the time of one call of the game's rule:
+
+| Game | Hazel's interpreter | hazel-jit, 2026-11-19 | hazel-jit now (0.0.14) | plain JavaScript |
+|---|---:|---:|---:|---:|
+| Checkers | 18.4 ms | 11.5 µs | 11.2 µs | 1.4 µs |
+| Go | 74.3 ms | 25.8 µs | 13.2 µs | 4.2 µs |
+| Minesweeper | 71.0 ms | 64.9 µs | 8.6 µs | 0.7 µs |
+| Mahjong | 22.8 ms | 21.4 µs | 12.4 µs | 8.6 µs |
+| Solitaire | 40.7 ms | 10.0 µs | 4.1 µs | 1.1 µs |
+
+- **The interpreter** is `Hazel.runProgram`. **hazel-jit now** is `Hazel.jitProgram`, converting each call's values from the page's shapes and back. **hazel-jit, 2026-11-19** is each game's own file compiled ahead of time a week earlier, with converters written by hand. **Plain JavaScript** is the game written by hand.
+- Measured on GitHub's machines (Node 22), one machine a game, all four ways one after another. How, and every game: [Hazel reports, report 65, "Four ways, on the games"](https://matthewhammer.org/hazel/reports/065/#fourway).
+- What still separates hazel-jit from plain JavaScript, and what comes next: the same report, [What is still left](https://matthewhammer.org/hazel/reports/065/#left) and [Conversion at the edges](https://matthewhammer.org/hazel/reports/065/#crossing).
 
 ## Install
 
@@ -32,233 +52,116 @@ npm install hazeljs
 Or in a web page, from a CDN that serves npm packages:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.9/hazel-lib.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.14/hazel-lib.js"></script>
 <script>
   console.log(Hazel.run("1 + 2").value); // 3
 </script>
 ```
 
-The script defines a global `Hazel` (`window.Hazel`). The same file is at `https://unpkg.com/hazeljs@0.0.6/hazel-lib.js`.
+The script defines a global `Hazel`. From Node: `const Hazel = require("hazeljs")`, or `import Hazel, { run, jit } from "hazeljs"`. TypeScript types are included (`index.d.ts`).
 
 ## Usage
 
-CommonJS:
+### Run, even unfinished
 
 ```js
-const Hazel = require("hazeljs");
-```
-
-ES modules, the whole object or its parts:
-
-```js
-import Hazel from "hazeljs";
-import { analyze, run, analyzeProgram, runProgram } from "hazeljs";
-```
-
-TypeScript types are included (`index.d.ts`).
-
-### Analyze and run
-
-```js
-Hazel.analyze("1 + true");
-// { errors: ["Error in term:\n  true\nNature of error: Expecting type Int but got inconsistent type Bool"] }
-
 Hazel.run("let x = 2 in x * 21");
 // { errors: [], value: 42 }
+
+Hazel.analyze("1 + true");
+// { errors: ["Error in term:\n  true\nNature of error: Expecting type Int but got inconsistent type Bool"] }
 ```
 
-A program's errors do not stop it running: Hazel evaluates around its holes and errors, so `value` is there either way, and your code decides which errors it accepts.
+A program's errors do not stop it: Hazel evaluates around its holes and errors, so `value` is there either way, and your code decides which errors it accepts. Where an error or a hole stopped the evaluation, that part of the value is `{ hazel: "…" }`, a printout of the term it stopped at.
 
-### Call Hazel functions from JavaScript
+### Run compiled
 
-Analyze a program once, then call its functions as often as you like:
+`jit` is a drop-in for `run`:
 
 ```js
-const rule = Hazel.run(`
-  type Cmd = + Done + Flip(Int, Cmd) in
-  type Event = + Pull(Int) in
-  fun e : Event -> case e | Pull(l) => Flip(l, Done) end`).value;
+const { value, compiled, reason } = Hazel.jit(`
+  let sq : Int -> Int = fun x -> x * x in
+  let sum_sq : [Int] -> Int = fun xs -> case xs | [] => 0 | x :: rest => sq(x) + sum_sq(rest) end in
+  (sq = sq, sum_sq = sum_sq)`);
 
-rule({ tag: "Pull", value: 2 }); // { tag: "Flip", value: [2, { tag: "Done" }] }
+value.sum_sq([1, 2, 3]); // 14
 ```
+
+- **The same values as `run`.** A function the compiled code made stays compiled; its arguments are read by the type it declares, straight into compiled code's shapes, and its answer comes back the same way.
+- **The interpreter covers the rest.** A call the compiled code can't finish (dividing by zero, something indeterminate, a run past its budget) is run by the interpreter, and its answer returned. A program hazel-jit doesn't compile at all (it has a hole or a test) has `compiled: false`, `reason` names the form, and `value` is the interpreter's.
+- **Ahead of time.** `compile` returns `js`, the body of a function of `$R`, and `runtime`, the source of the object to pass as `$R`: `new Function("$R", js)(eval("(" + runtime + ")"))` is the program's value, in hazel-jit's own shapes (below). Keep the two strings in a file and the page runs the program without Hazel.
+
+### A program of modules
+
+For a page with an editor per module, hand Hazel the texts and let it build one program:
+
+```js
+const result = Hazel.runProgram({
+  preamble: "type Cmd = + Done + Say(String) in",   // what every module sees, ending in `in`
+  modules: [
+    { name: "Common", text: "let greet = fun (s : String) -> Say(s)" },
+    { name: "Room", text: "let on_event = fun (n : Int) -> Common.greet(\"hi\")" },
+  ],
+  tail: "Room.on_event",                             // what the program gives
+});
+
+result.ok;       // true: no errors, no holes, nothing left open
+result.value(1); // { tag: "Say", value: "hi" }
+```
+
+Each module sees the preamble and the modules before it (`Common.greet`), and the tail sees them all. `jitProgram` and `compileProgram` take the same spec. The answer says what is not ready, where:
+
+- `errors`: `[{ module, message, id }]`, `module` the module the error is in (`null` for the preamble and the tail);
+- `holes`: each module's holes, by name, and `programHoles`, the preamble's and the tail's;
+- `incomplete`: each module's brackets and keywords left open, and `programIncomplete`;
+- `ok`: none of these. A function still being written can have holes and no errors, so act on `value` only when `ok`.
+
+Hazel remembers the texts of the last program it read, so after one module changes, only that module is read again.
 
 ## API
 
 | Call | Returns |
 |---|---|
-| `Hazel.analyze(text)` | `{ errors }`: the program's error messages, as strings. |
-| `Hazel.run(text)` | `{ errors, value }`: the same, and the program's value. |
-| `Hazel.analyzeProgram(spec)` | `{ ok, errors, holes, programHoles, incomplete, programIncomplete, ms }`, for a program of named modules (below). |
-| `Hazel.runProgram(spec)` | The same, and `value`. |
-| `Hazel.compile(text)` | `{ errors, compiled, js, runtime, reason, ms }`: the program compiled to JavaScript by hazel-jit (below). |
-| `Hazel.jit(text)` | `{ errors, compiled, reason, value, ms }`: the program run compiled, its value as `run` gives it. |
-| `Hazel.compileProgram(spec)` | `analyzeProgram`'s fields, and `compile`'s. |
-| `Hazel.jitProgram(spec)` | `analyzeProgram`'s fields, and `jit`'s. |
-| `Hazel.version` | The library's own label, such as `"0.1 (draft, js-library)"`. |
-| `Hazel.build` | The hazelgrove/hazel commit this build is from. |
+| `Hazel.analyze(text)` | `{ errors }`, the program's error messages |
+| `Hazel.run(text)` | `{ errors, value }` |
+| `Hazel.jit(text)` | `{ errors, compiled, reason, value, ms }`: run compiled, the value as `run` gives it |
+| `Hazel.compile(text)` | `{ errors, compiled, js, runtime, reason, ms }`: the JavaScript itself |
+| `Hazel.analyzeProgram(spec)` | `{ ok, errors, holes, programHoles, incomplete, programIncomplete, ms }` for a program of modules |
+| `Hazel.runProgram(spec)` | the same, and `value` |
+| `Hazel.jitProgram(spec)`, `Hazel.compileProgram(spec)` | `analyzeProgram`'s fields, and `jit`'s or `compile`'s |
+| `Hazel.development(on)` | while on, what crosses into and out of compiled functions is frozen (below) |
+| `Hazel.version`, `Hazel.build` | the library's label, and the hazelgrove/hazel commit it is built from |
 
 ## Values
 
-Values convert both ways: Hazel's results come back as these, and a JavaScript value passed to a Hazel function goes in as these.
-
-| Hazel | JavaScript |
-|---|---|
-| `Int`, `Float` and the other numbers | number |
-| `Bool` | boolean |
-| `String` | string |
-| a list | an array |
-| `()` | `null` |
-| a labeled tuple `(x = 1, y = 2)` | an object `{x: 1, y: 2}` |
-| another tuple `(1, true)` | an array `[1, true]` |
-| a constructor `A`, applied `B(3)` | `{tag: "A"}`, `{tag: "B", value: 3}` |
-| a function | a JavaScript function (one argument, or several as a tuple) |
-
-Anything else (a type, a hole) comes back as `{hazel: "<its printing>"}`.
-
-An object's keys can be in any order: its fields meet the labeled tuple's type by label, so `{y: [1], x: 5}` is `(x = 5, y = [1])` for a parameter `p : (x = Int, y = [Int])`. (Before 0.0.5, the keys had to be in the type's order when a field was a list or another tuple; a field out of order stayed stuck under another field's type.)
-
-A value going into a Hazel function is read by the type the function declares for its parameter: its annotation (`fun s : S -> ...`, `fun (m, t) : (Int, Bool) -> ...`), or, at the program's top level, the binding's (`let f : A -> B = fun x -> ...`). A module's member typed only by its binding is not read that way yet, so in a module annotate the parameter itself where a tuple comes from JavaScript in one array, or pass its parts as separate arguments. An array is a tuple where the type wants a tuple and a list where it wants a list, so for `type S = + Two(Int, Bool) + One(Int)`, `{tag: "Two", value: [3, true]}` is `Two(3, true)`, and `[3, true]` given to a function of a pair is the pair. A constructor's value is read by its own type, a recursive type's too, so a command tree that came out of Hazel can go back in; and a whole number where a `Float` is expected is a `Float`. With no type declared, an array is a list and a whole number an `Int`, so declare the parameter's type where a tuple or a `Float` comes from JavaScript. (Before 0.0.7, an array was always a list, and a tuple from JavaScript, alone or in a constructor, stayed stuck.)
-
-A constructor from JavaScript has no type of its own, so Hazel checks it where a parameter is annotated (`fun e : Event -> ...`). An applied constructor is checked whole, tag and payload; one that does not fit the type stays stuck at the parameter, and the call returns `{hazel: ...}`.
-
-## A program of modules
-
-For a page with an editor per module, hand Hazel the texts and let it build one program from them:
-
-```js
-const result = Hazel.runProgram({
-  preamble: "type Cmd = + Done + Say(String) in",  // definitions every module sees, ending in `in`
-  modules: [
-    { name: "Common", text: "let greet = fun (s : String) -> Say(s)" },
-    { name: "Room", text: "let on_event = fun (n : Int) -> Common.greet(\"hi\")" },
-  ],
-  tail: "Room.on_event",  // what the program gives; () if left out
-});
-
-result.ok;       // true: no errors, no holes, nothing left unfinished
-result.value(1); // { tag: "Say", value: "hi" }
-```
-
-Each module sees the preamble and the modules before it, as `Common.greet`, and the tail sees them all. A module's text is its body: its members, with no `in`.
-
-- `errors`: `[{ module, message, id }]`, where `module` is the name of the module the error is in, or `null` for the preamble and the tail.
-- `holes`: each module's holes, by name (`{ Common: 0, Room: 1 }`); `programHoles`, the preamble's and the tail's.
-- `incomplete`: each module's brackets and keywords left open (a `(` with no `)`, a `case` with no `end`) or closed with no opener; `programIncomplete`, the preamble's and the tail's.
-- `ok`: no errors, no holes and nothing incomplete. A function still being written can have holes and no errors, so act on `value` only when `ok`.
-- `ms`: how long the call took, in milliseconds. (In 0.0.1 to 0.0.3 it read 0, a bug fixed in 0.0.4.)
-
-Hazel remembers the texts of the last program it read, part by part, so calling again after one module changes reads only that module again.
-
-## Errors, holes and unfinished code
-
-Hazel reads the whole program before it runs any of it, and it reports what is wrong as data, not as an exception. An example from Messed Up Dress Up's trap room: a lever is a `Side`, `L` or `R`, and the room's rule passes a number instead.
-
-```js
-const result = Hazel.analyzeProgram({
-  preamble: "type Side = + L + R in",
-  modules: [
-    { name: "Common", text: "let flip = fun (s : Side) -> s" },
-    { name: "TrapRoom", text: "let answer = Common.flip(3)" },
-  ],
-  tail: "TrapRoom.answer",
-});
-```
-
-```js
-{
-  ok: false,
-  errors: [{
-    module: "TrapRoom",
-    message: "Error in term:\n  3\nNature of error: Expecting type Side but got inconsistent type Int",
-    id: "3d0f0000-0000-4000-b53b-3f45d4c660e0",
-  }],
-  holes: { Common: 0, TrapRoom: 0 }, programHoles: 0,
-  incomplete: { Common: 0, TrapRoom: 0 }, programIncomplete: 0,
-  // and ms
-}
-```
-
-A program can be not ready in three ways, and each is counted where it is:
-
-| What | Example | Where it shows |
+| Hazel | JavaScript, as `run` and `jit` give and take it | Compiled code's own shapes (`compile`) |
 |---|---|---|
-| An error | `Common.flip(3)`: a number where a `Side` is wanted | `errors`, each with its module |
-| A hole: a part not written yet | `Common.flip(?)` | `holes: { TrapRoom: 1 }`, and no error |
-| Something unfinished: a bracket or keyword without its partner | `Common.flip(L` | `incomplete: { TrapRoom: 1 }` |
+| `Int`, `Float` and the other numbers | number | number (an `Int` past 2^53, a `BigInt`) |
+| `Bool`, `String` | boolean, string | the same |
+| a record `(x = 1, y = 2)` | an object `{x: 1, y: 2}` | the same object |
+| another tuple `(1, true)` | an array `[1, true]` | an array |
+| a list | an array | `null`, or a cell `{$h, $t}` |
+| a constructor `A`, `B(3)` | `{tag: "A"}`, `{tag: "B", value: 3}` | `{$c: "A"}`, `{$c: "B", $v: 3}` |
+| a function | a JavaScript function: one argument, or a tuple's parts as several | a function of one argument; a named one of a tuple also has `$d`, the parts as arguments |
+| `()` | `null` | |
 
-A program with only text, read by `Hazel.analyze` or `Hazel.run`, reports its errors as strings, without a module:
+A value going into a Hazel function is read by the type the function declares (`fun s : Shape -> ...`, or `let f : A -> B = ...`): an array is a tuple where the type wants a tuple and a list where it wants a list, an object meets a record's fields by label in any order, and a whole number is a `Float` where a `Float` is wanted. With no type declared, an array is a list and a whole number an `Int`, so declare the parameter's type where a tuple or a `Float` comes from JavaScript.
 
-```js
-Hazel.analyze("let x : Int = true in x").errors;
-// ["Error in term:\n  true\nNature of error: Expecting type Int but got inconsistent type Bool"]
-```
+**Don't change what crosses.** What your page gives a compiled function, and what it gets back, the page does not change afterwards, as React has it for state: make a changed copy instead (`{...state, x: 2}`, `[...xs, 5]`). The library keeps a record of plain values as your own object, and remembers what it converted, which is much of why a call is fast; changing one would change a Hazel value under the compiled code. While you develop, `Hazel.development(true)` freezes everything that crosses, all the way down, so a change throws where it happens (in strict code). It is off unless you turn it on.
 
-### Showing them
+## Examples
 
-Hazel's messages are written for Hazel's developers. Messed Up Dress Up says a type error the way a person reads it, with this function (its `scriptErrorText`, slightly shortened). Other messages pass through as they are:
+### Games and activities whose rules are Hazel
 
-```js
-function errorText(message) {
-  const m = message.match(/^Error in term:\s*\n\s*([\s\S]*?)\nNature of error: Expecting type ([\s\S]*?) but got inconsistent type ([\s\S]*)$/);
-  if (!m) return message;
-  const a = t => (/^[AEIOU]/.test(t.trim()) ? "an " : "a ") + t.trim();
-  return `${m[1].trim()}: ${a(m[2])} is wanted here, but this is ${a(m[3])}`;
-}
+**▶ [hazeljs-examples](https://matthewhammer.org/hazeljs-examples/)** ([source](https://github.com/matthewhammer/hazeljs-examples)): oracles (an I Ching, a Tarot, an astrology chart), board and card games (Checkers and Go with Hazel opponents, Minesweeper, Mahjong, Solitaire), arcade games, and Gnome world. Each page keeps its state and draws it in JavaScript, and calls its rules, written in Hazel, on each event: compiled by hazel-jit when the page loads, or interpreted while you edit them in Hazel's editor beside the game.
 
-for (const e of result.errors) console.log(`${e.module ?? "the program"}: ${errorText(e.message)}`);
-// TrapRoom: 3: a Side is wanted here, but this is an Int
-```
+<img src="https://matthewhammer.org/hazel/reports/065/img/gnome-world.jpg" width="720" alt="Gnome world: on the left, the world's vocabulary in Hazel (record types for a ground, a layer, a place, a plan, a room, a gnome and its moves); on the right, the game: a gnome among trees and burrows, the buttons to play it, and the line saying Hazel's rules were compiled by hazel-jit as the page loaded, the gnome's step about 0.088 ms.">
 
-Two things to know when you show them:
-
-- **A sum type with no name is written out.** Had `Side` been defined in a module instead of the preamble, the message would say `L + R`. The game maps such types back to its own names.
-- **A name that is not there is a missing label.** `Common.flop(L)` gives `Nature of error: Label not found`, since a module's members are reached like a labeled tuple's.
-
-The game shows a room's errors in three places: under the room's box, by name, with ⚠️ and a count in its outline, and as a check entry in its event log, before anything runs.
-
-<img src="https://matthewhammer.org/kids-choice-games/dress-up/reports/017/pictures/06-type-error-box.webp" width="720" alt="The trap room's box in Messed Up Dress Up, with its type errors listed under its name.">
-
-### Running anyway
-
-`runProgram` and `run` evaluate around errors and holes, as Hazel always does, so `value` is there even when `ok` is false. But where an error or a hole stopped the evaluation, the value comes back as `{ hazel: "…" }`, a printout of the term it stopped at, and a page cannot act on that. Messed Up Dress Up keeps answering with its own JavaScript while a room's rule is not `ok`, and logs Hazel's answer beside it, so the game keeps working while the rule is fixed. For more, see the game's [Game Scripts Guide](https://matthewhammer.org/kids-choice-games/dress-up/reports/017/#ch8), section 8, on broken scripts.
-
-## Compiled to JavaScript
-
-Since 0.0.10 the package can compile a program to JavaScript with hazel-jit, Hazel's compiler from a program to JS, and run it compiled. `jit` is a drop-in for `run`:
-
-```js
-const { value, compiled, reason } = Hazel.jit(`
-  let sq : Int -> Int = fun x -> x * x in
-  let sum_sq : [Int] -> Int = fun xs ->
-    case xs
-    | [] => 0
-    | x :: rest => sq(x) + sum_sq(rest)
-    end in
-  (sq = sq, sum_sq = sum_sq)`);
-value.sum_sq([1, 2, 3]); // 14, computed by the compiled code
-```
-
-- **Values are the ones `run` gives.** A function the compiled code made stays compiled. Its arguments are read by the type it declares, straight into the compiled code's shapes, and its answer comes back the same way, with no Hazel values made on the way.
-- **Don't change what crosses.** What your page gives a compiled function, and what it gets back, the page does not change afterwards, as React has it for state. Make a changed copy instead: `{...state, x: 2}`, `[...xs, 5]`. The library keeps a record of plain values as your page's own object, and remembers what it converted, so changing one would change a Hazel value under the compiled code. While you develop, `Hazel.development(true)` freezes everything that crosses, all the way down, so a change throws where it happens (in strict code) instead of giving a wrong answer later. It is off unless you turn it on, since freezing walks every value that crosses. Since 0.0.13.
-- **The interpreter covers what the compiled code can't.** If a call can't finish compiled (dividing by zero, something indeterminate), Hazel's interpreter runs it and its answer is returned. If hazel-jit doesn't compile some form at all (a hole, a test), `compiled` is `false`, `reason` names the form, and `value` is the interpreter's.
-- **Ahead of time.** `compile` returns the JavaScript itself. `js` is the body of a function of `$R`, and `runtime` is the source of the object to pass as `$R`, so `new Function("$R", js)(eval("(" + runtime + ")"))` is the program's value. That value comes in hazel-jit's own shapes: a tuple whose every entry is labeled is a plain object, `{x: 1, y: 2}`; any other tuple is an array; a list is `null` or a cell `{$h, $t}`; and a constructor is `{$c, $v}`, as `{$c: "Some", $v: 3}`. These changed in 0.0.13 (records were arrays, and the keys had no `$`), so a page that keeps compiled code with its own converters changes them when it compiles again. Keep the two strings in a file and the page runs the program without loading Hazel. The games in [hazeljs-examples](https://matthewhammer.org/hazeljs-examples/) do this with their `compiled.js` files.
-- **How fast.** For [Gnome dig](https://matthewhammer.org/hazeljs-examples/dig/)'s rules (`jitProgram`, in Node 22 on a laptop), one step of the game takes 82 ms interpreted and 0.28 ms through `jit`, and the two agree step for step for 20 steps. On the games of [hazeljs-examples](https://matthewhammer.org/hazeljs-examples/), each played through its own run of states, a call through `jit` takes 0.48 of the time of the game's own ahead-of-time `compiled.js` (the geometric mean over 14 games, [report 54](https://matthewhammer.org/hazel/reports/054/#records-tried)).
-- **What compiles.** Everything but holes, tests, the stepper's filters and a few other forms; `reason` says which form stopped it. An `SInt` is checked at 32 bits for now; 64 bits will come with hazelgrove/hazel#2828.
-
-## Hazel's own editor, beside your page
-
-The library holds no editor: you bring the box. The apps under [Examples](#examples) show their Hazel in Hazel's own tile editor instead of a text area. Each module is in a frame of Hazel's app, in its editable embed mode. The page and its frames talk by `postMessage`:
-
-**The editor is in the package** (since 0.0.9, [hazelgrove/hazeljs#2](https://github.com/hazelgrove/hazeljs/issues/2)): `editor/`, Hazel's app (68 files, 11 MB), built from the same commit of Hazel as `hazel-lib.js`. Nothing loads from anywhere else: the editor's scripts, styles, fonts and images all come from the package, beside `hazel-listings.js`, wherever you load it from. An npm CDN serves files, not pages (jsDelivr sends `.html` as plain text), so `hazel-listings.js` makes each frame's page itself: it reads `editor/index.html`, adds a `<base>` at `editor/`, and frames it from a `blob:` address. A `blob:` page has your page's origin, so the frame takes your page's messages on any site. Before 0.0.9, the frame came from a build of Hazel's `embed-editable` branch at `https://build.hazel.org/embed-editable/`, which took messages only from a few sites.
-
-- The page sends a frame the whole program (`{type: "set", preamble, modules, tail}`) and the module it shows (`{type: "focus", module}`).
-- The frame sends each edit's text (`{type: "edit", text}`), the program's errors and holes, by module (`{type: "status", ...}`), and a go to definition it cannot answer itself (`{type: "goto", name}`), for a name defined in another module.
-
-After each edit, the page sends the new program to the other frames and builds it again with `runProgram`. The protocol in full is in Hazel's [docs/hazel-as-a-js-library.md](https://github.com/hazelgrove/hazel/blob/hazeljs/docs/hazel-as-a-js-library.md), on the branch the editor is built from, `hazeljs`.
+In [Gnome world](https://matthewhammer.org/hazeljs-examples/world/), Hazel plans the world from a seed and moves the gnome sixty times a second: its rules compile as the page loads, and the gnome's step takes about a tenth of a millisecond.
 
 ### Listings in an article
 
-For an article or a blog post, `hazel-listings.js` does all of that for each `<pre class="hazel">` on the page. It has been in the package since 0.0.5:
+For an article or a blog post, `hazel-listings.js` turns each `<pre class="hazel">` into Hazel's own editor:
 
 ```html
 <pre class="hazel" data-program="shapes">type Shape = + Circle(Float) + Rect(Float, Float) in</pre>
@@ -267,126 +170,48 @@ For an article or a blog post, `hazel-listings.js` does all of that for each `<p
   | Circle(r) => 3.14159 *. r *. r
   | Rect(w, h) => w *. h
   end</pre>
-<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.9/hazel-listings.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hazeljs@0.0.14/hazel-listings.js"></script>
 ```
 
-- **One program per name.** Listings with the same `data-program` are one program: the listing without `data-module` is its preamble, and each other listing is a module.
-- **Each listing becomes Hazel's editor.** You get go to definition across listings (Ctrl+click, ⌘-click, F12, or the right-click menu). Each error appears under the listing it is in. Until the editor starts, the page shows the text as it is.
-- **Long lines break to fit.** A line longer than its listing is broken as a pretty-printer would, at the outermost places the code allows (a case's arms, a let's body, a list's items), each piece indented; only spaces and line breaks change. The listing breaks again when its width changes (a resize, a divider, full screen), and a wider listing gets its long lines back. The page's own text is kept as written. Since 0.0.6 ([hazelgrove/hazeljs#1](https://github.com/hazelgrove/hazeljs/issues/1)); the editor is sent the font of the page's `<pre>`, so the width is measured in it.
-- **Without JavaScript, the page still reads.** The listings stay plain text.
-- **The page can follow edits.** `HazelListings.onChange(program, fn)` calls `fn` with the program after each edit, in the form `runProgram` takes.
-- **One button: text or Hazel's editor.** A single button, before the first listing, switches every listing on the page between highlighted text and Hazel's editor (**Edit in Hazel**, **Show as text**). Back to text shows each listing as it now is, edits and all, and the editors stay loaded behind it, so switching again is quick. Put the button elsewhere with `HazelListingsOptions.toggle` (an element or a selector), or leave it out (`toggle: false`) and call `HazelListings.view("text")` or `HazelListings.view("tiles")` from your own control; `HazelListings.view()` says which is showing. Since 0.0.8.
-- **The text is highlighted.** Keywords, types and constructors, strings, numbers and comments, near the colours Hazel's editor gives them, in light and dark. The colours are CSS variables a page can set: `--hazel-type`, `--hazel-string`, `--hazel-number`, `--hazel-comment`. Since 0.0.8.
-- **Text first, the editor when asked.** Set `window.HazelListingsOptions = { start: "request" }` before the script loads, or put `data-start="request"` on its tag, and the listings start as text until the button opens the editors. Each editor is a whole Hazel app, so on a phone this matters: see [On older or slower devices](#on-older-or-slower-devices). Without it, the editors start once the first listing is near the screen. Since 0.0.7 (in 0.0.7, a button on each listing; since 0.0.8, the one button for all).
+- **One program per name.** Listings with the same `data-program` are one program: the one without `data-module` is its preamble, each other a module. Go to definition works across them (Ctrl or ⌘-click, F12), and each error shows under the listing it is in.
+- **Text first, the editor when asked.** One button switches every listing between highlighted text and Hazel's editor; with `data-start="request"` on the script tag, the listings start as text. Each editor is a whole Hazel app, so on a phone, start as text.
+- **The page can follow edits:** `HazelListings.onChange(program, fn)` calls `fn` with the program after each edit, in the form `runProgram` takes.
+- **Offline, on any site.** The editor (`editor/`, 68 files, 11 MB) is in the package, built from the same commit as `hazel-lib.js`; nothing loads from anywhere else. The frames are made from `blob:` addresses with your page's origin, so a page whose Content Security Policy limits frames must allow `blob:` in `frame-src`.
 
-[Hazel Listings in an Article](https://matthewhammer.org/hazel/reports/044/) is the guide, and it is itself such a page.
+The guide, itself such a page: [Hazel Listings in an Article](https://matthewhammer.org/hazel/reports/044/). A page can also frame Hazel's editor itself and talk to it by `postMessage`; the protocol is in Hazel's [docs/hazel-as-a-js-library.md](https://github.com/hazelgrove/hazel/blob/hazeljs/docs/hazel-as-a-js-library.md).
 
-**Where the frame works.** On any site, since 0.0.9: from a CDN, from `node_modules` served beside your page, or from a copy of the package on your own server. The frame's page has your page's origin, so the editor runs as part of your page, as the script itself does: it reads one key of your page's local storage, `HAZEL_THEME`, Hazel's saved colours. To frame a copy of Hazel's app instead, at an address of its own, name it on the script tag: `<script src=".../hazel-listings.js" data-frame="/hazel/index.html#embed">`; that copy takes messages only from its own site and the sites in its list, as before 0.0.9 (the guide's section [Your own site](https://matthewhammer.org/hazel/reports/044/#host)). A page whose Content Security Policy limits frames must allow `blob:` in `frame-src`.
+## Fast on any device
 
-## Examples
-
-Two apps use `hazeljs` the same way: the app keeps its state and draws it, and on each event it calls a Hazel function, a rule written by its users, and acts out the commands the rule returns. While a rule has an error or a hole, the app's own JavaScript answers instead, so the app keeps working while its rules are edited.
-
-### Messed Up Dress Up, a game
-
-[Messed Up Dress Up](https://matthewhammer.org/kids-choice-games/dress-up/) is a dress-up and adventure game in plain JavaScript, made with two young players. It is the first Hazlet: five of its rooms hand their events to a rule, a function `on_event : (Globals, Event) -> Cmd`, which players can write in Hazel (or in JavaScript, or in Fumola) in the game's 📜 Scripting panel, while they play. The game builds one program from the panel's modules with `Hazel.runProgram`, then calls the room's rule with each event and runs the commands it returns.
-
-The trap room's rule in Hazel, beside the game:
-
-<img src="https://matthewhammer.org/kids-choice-games/dress-up/reports/017/pictures/04-max-trap-room.webp" width="720" alt="The game's Scripting panel at full size: the game's view at the top left, and the trap room's rule in Hazel, a case on the event: a red lever pulled flips the pits wired to it, a blue lever pulled moves the boulders.">
-
-Playing and reading at once: each event the room hands to Hazel, and Hazel's answer, in the panel's event log:
-
-<img src="https://matthewhammer.org/kids-choice-games/dress-up/reports/017/pictures/05-log.webp" width="720" alt="The event log: calls of TrapRoom.on_event with Pull(L) and Pull(R) events, each with the event and the rule's answer as JSON, what the call changed (a lever from false to true), and how long the rule and the call took.">
-
-The game's guide to its scripts, with more of these pictures: [Game Scripts Guide](https://matthewhammer.org/kids-choice-games/dress-up/reports/017/).
-
-### A Petri net simulator
-
-**▶ Try it at https://matthewhammer.org/hazeljs-petri-example/** · [source](https://github.com/matthewhammer/hazeljs-petri-example) · [versions](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/VERSIONS.md)
-
-[hazeljs-petri-example](https://github.com/matthewhammer/hazeljs-petri-example) is a small app whose Petri net runs in the page and whose firing rule is written in Hazel: two processes sharing one lock, a rule `on_event : (Net, Event) -> Cmd` that fires a transition when it can, and `Step`, which picks one of those that can with a random draw the page passes in. The rules are files ([`rules/preamble.hz`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/rules/preamble.hz) for the vocabulary, [`rules/Common.hz`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/rules/Common.hz) and [`rules/Rules.hz`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/rules/Rules.hz) for the modules), and so is the net: [`rules/Main.hz`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/rules/Main.hz) holds its places, transitions, starting marking and where each is drawn, and the handler the page calls. All of it is read both by the page and by a Node script (`npm run example`), and all of it is editable on the page, which draws the net again after each edit. The page builds one program from the modules with `Hazel.runProgram` after every edit, calls the rule with each event, and acts out the commands it returns ([`js/live.js`](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/js/live.js)). It is built as a second user of `hazeljs` would build one, to see what the game's way of doing it takes elsewhere, and to start from for other kinds of Petri nets (coloured ones, whose tokens carry data, among them).
-
-The rules on the left, each module in Hazel's own editor (`hazel-listings.js`, above; the page carries its own copy), and the net on the right, with its buttons and its event log. An opened entry shows the event, Hazel's answer, and the tokens it moved:
-
-<img src="https://raw.githubusercontent.com/matthewhammer/hazeljs-petri-example/main/pictures/rules-and-net.jpg" width="720" alt="The app in two columns. On the left, the vocabulary and the module Common in Hazel's tile editor. On the right, the net of two processes and a lock, the Step, Reset and full screen buttons, the status saying the rules are ready, and the event log with one entry open: the event Step, Hazel's answer Say(&quot;leave1&quot;, Take(...)), and the tokens it moved.">
-
-An error is shown under the listing it is in, in words. Here `++` joins a string to an Int. While the rules have an error or a hole, the page's own JavaScript answers each event, and the log says which engine answered (`JS`):
-
-<img src="https://raw.githubusercontent.com/matthewhammer/hazeljs-petri-example/main/pictures/error-under-its-rule.jpg" width="720" alt="The module Rules in Hazel's editor, with i outlined in &quot;there is no transition &quot; ++ i, and under the listing: i: a String is wanted here, but this is an Int. Beside it, the status says the rules are not ready, so the page's own JS answers events, and the log's two entries are marked JS.">
-
-**⛶ full screen** gives the whole app the screen, in two columns. Drag the divider between the columns to give the rules or the net more room, on the page as well as in full screen. You can also use the arrow keys on the divider, and a double-click puts it back:
-
-<img src="https://raw.githubusercontent.com/matthewhammer/hazeljs-petri-example/main/pictures/full-screen.jpg" width="720" alt="The app in full screen: the modules Common and Rules on the left, the divider, and on the right the net, its buttons with leave full screen, and an event log of six Hazel answers.">
-
-Try it at https://matthewhammer.org/hazeljs-petri-example/, or clone it, serve the folder (`python3 -m http.server`) and open it from `localhost`. What it does, version by version: [VERSIONS.md](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/VERSIONS.md). What comes next for it, in the game's style: [PLAN.md](https://github.com/matthewhammer/hazeljs-petri-example/blob/main/PLAN.md).
-
-### Reports
-
-- [Scripting a JavaScript App in Hazel](https://matthewhammer.org/hazel/reports/043/): how Messed Up Dress Up uses `hazeljs` for its scripts, the steps of building the Petri net example, and the example itself, live on the page, with what each call costs.
-- [Hazel Listings in an Article](https://matthewhammer.org/hazel/reports/044/): how a page can show its Hazel code in Hazel's own editor, with go to definition from one listing to another.
-
-## Size and speed
-
-`hazel-lib.js` is about 2.8 MB, 640 KB gzipped. Since 0.0.9 the package also holds Hazel's editor, `editor/` (11 MB), which a page loads only for Hazel's editor in its listings. Measured in Node 22 on a laptop: `require("hazeljs")` takes about 170 ms, and running a small program about 30 ms. A module of 100 short members takes about 110 ms to analyze, and one of 400 about 2.3 s; after an edit, only the modules whose text changed are read again.
-
-## On older or slower devices
-
-An older phone runs the same JavaScript several times slower than a laptop. These lessons come from [hazeljs-oracles](https://github.com/matthewhammer/hazeljs-oracles) (an I Ching and a Tarot whose rules are Hazel), which were painfully slow on an older Android phone in Firefox, to draw each card or line and on each key press. The numbers are from a laptop:
-
-- **Load the library after the page.** `hazel-lib.js` is about 2.8 MB. Load it `async`, once the page has drawn, and let the page's own JavaScript answer until Hazel is ready, as the examples do.
-- **Build once.** `runProgram` (reading, analyzing and preparing the program) is the costly step: 0.5 to 0.6 s for each oracle's few hundred lines, several seconds on an older phone. Build when the page loads and after an edit to the program (wait for a pause in the typing), and never on a key press elsewhere on the page. Calling the functions it returns is what to do often.
-- **Declare each function's whole type,** what it returns as well as what it takes: `let take : ([Card], Int) -> (Card, [Card]) = fun (cs, k) -> ...`. Hazel checks a value against a result type left undeclared while the program runs; the Tarot's deal got 3.7 times faster with every type declared.
-- **Keep calls few and large.** Every call is interpreted: a cast took 0.4 to 1.2 ms, a ten-card deal about 50 ms. Make one call for a user's action, not one for each thing drawn.
-- **Open Hazel's editor only when asked.** Each listing's editor is a whole Hazel app, about 7 MB of JavaScript and some 50 MB of memory. Five on one page made the older phone slow at everything, key presses included (Firefox on Android may run the frames on the page's own thread). Start the listings as text, with the editors a button away ([listings](#listings-in-an-article)).
-- **Measure on the device.** Each oracle's ⚙️ Advanced has a speed measurement: the same work on any device, and one line to paste and compare ([`shared/advanced.js`](https://github.com/matthewhammer/hazeljs-oracles/blob/main/shared/advanced.js)).
-- **Compile it ahead of time.** Since 0.0.10, `compile` gives a program's JavaScript, which a site can make when it is built, so its pages load neither the library nor the editor ([Compiled to JavaScript](#compiled-to-javascript)); [report 54](https://matthewhammer.org/hazel/reports/054/#ahead) has the plan.
+- **Compile what is finished.** `Hazel.jit` runs a complete program thousands of times as fast as the interpreter; `Hazel.compile`, ahead of time, lets a page skip loading Hazel altogether.
+- **Load the library after the page.** `hazel-lib.js` is about 2.9 MB (670 KB gzipped). Load it `async` once the page has drawn, and let the page's own JavaScript answer until Hazel is ready.
+- **Build once.** Reading and analyzing a program is the costly step (half a second for a few hundred lines on a laptop, several seconds on an older phone). Build when the page loads and after an edit, never on every key press; calling the functions it returns is what to do often.
+- **Declare each function's whole type,** what it returns as well as what it takes: `let take : ([Card], Int) -> (Card, [Card]) = fun (cs, k) -> ...`. Values cross by it, the interpreter's steps are several times cheaper with it, and a call through `jit` reads its arguments by it.
+- **Hand back what you were given.** A value that crossed before crosses again for nothing, so a page that passes the last answer back as the next call's state is faster than one that rebuilds it each time.
 
 ## Is it really Hazel?
 
-`hazel-lib.js` is 2.8 MB of compiled JavaScript, so reading it tells you little. What you can check is that it is exactly what Hazel's source compiles to, at a commit you can read.
+What you can check is that `hazel-lib.js` is exactly what Hazel's source compiles to, at a commit you can read. `Hazel.build` names the commit, and so does the `hazel` field of `package.json`: for this release, `2c4a61560f22850146835684331f33992d21e9a6`, on Hazel's branch `hazeljs`.
 
-**It names its commit.** `Hazel.build` returns the hazelgrove/hazel commit it was built from, and the `hazel` field of `package.json` names the same commit, with its branch and pull request. For this release that is `20febee54854294d799bb92ec74e23360d02f2c1`, on Hazel's branch `hazeljs` ([hazelgrove/hazel#2857](https://github.com/hazelgrove/hazel/pull/2857)).
+- **Rebuild it and compare:** with a clone of [hazelgrove/hazel](https://github.com/hazelgrove/hazel) and its toolchain, `scripts/verify-build.sh path/to/hazel` builds that commit as Hazel's Deploy workflow does and compares the files. Every byte matches except one comment line, `//# buildInfo:`, where js_of_ocaml names its version. Without that line, this release's file has the SHA-256 `1aca6509cf8e22d7a33452c21e944e739ed295bb7d03a3778346ccfa34ab1767`.
+- **Or let GitHub rebuild it:** this repository's **Verify hazel-lib.js** workflow runs the same script on GitHub's machines, from a fresh clone of Hazel, and anyone can run it.
+- **Hazel's own CI built it too:** Hazel's deploy of that commit ([run 45650029904](https://github.com/hazelgrove/hazel/actions/runs/45650029904)) is this release's file, byte for byte, served at `https://build.hazel.org/hazeljs/hazel-lib.js` until the branch moves on.
 
-**Rebuild it and compare.** With a clone of [hazelgrove/hazel](https://github.com/hazelgrove/hazel) and its toolchain set up (see its README), run
-
-```sh
-scripts/verify-build.sh path/to/hazel
-```
-
-It checks out that commit, builds `hazel-lib.js` the way Hazel's own Deploy workflow does (the release profile, with `GITHUB_SHA` set to the commit), and compares the two files. Every byte must match except one comment line, `//# buildInfo:`, where js_of_ocaml names its own version label (`5.9.1` from one install, `5.9.1+5.9.1` from Hazel's lock file). Without that line, this release's file has the SHA-256 `88517864eb3107ac224d699e2984159a87c79b3c5b593a14ac4b864f8c6bd56b`. Built on GitHub's machines, as this release's was, it matches with that line too.
-
-**How a release's file is made.** `scripts/build.sh path/to/hazel COMMIT` builds `hazel-lib.js` from that commit the same way and records the commit in `package.json`. The **Build hazel-lib.js** workflow runs it on GitHub's machines and pushes the result to a branch `build/<commit>`, so a release's file is built where anyone can see it.
-
-**Or let GitHub rebuild it.** This repository's **Verify hazel-lib.js** workflow runs the same script on GitHub's machines, from a fresh clone of Hazel. Anyone can run it from the Actions tab, and its runs are public.
-
-**Hazel's own CI built it too.** Hazel's Deploy workflow builds every commit pushed to hazelgrove/hazel. Its build of this commit ([run 45540086629](https://github.com/hazelgrove/hazel/actions/runs/45540086629)) is this release's file, byte for byte. That build is served at `https://build.hazel.org/hazeljs/hazel-lib.js` only until the branch gets a newer commit:
-
-```sh
-curl -sL https://build.hazel.org/hazeljs/hazel-lib.js | grep -v '^//# buildInfo:' | sha256sum
-grep -v '^//# buildInfo:' node_modules/hazeljs/hazel-lib.js | sha256sum
-```
-
-**The editor, too.** The same workflow run builds `editor/` from the same commit (`EDITOR=1 scripts/build.sh`): Hazel's app, 68 files of it, the same ones Hazel's deploy of that commit serves at `https://build.hazel.org/hazeljs/`. `scripts/verify-build.sh` checks `hazel-lib.js` only, not yet `editor/`.
-
-What this shows is where the file came from. It is that commit of Hazel, compiled by the OCaml toolchain in Hazel's lock file, and nothing else. It does not show that the code at that commit does what you want; for that, read it, or trust the people who wrote it.
+That shows where the file came from, not that the code at that commit does what you want; for that, read it, or trust the people who wrote it.
 
 ## Limits
 
 - **Experimental.** No promise of stability yet; pin an exact version.
-- **Synchronous.** Every call runs on the calling thread, so a long-running program blocks it.
+- **Synchronous.** Every call runs on the calling thread; a long-running program blocks it. A compiled run stops at its budget, and the interpreter's answer is returned.
 - **One global.** The library puts one `Hazel` object on the global object.
-- **A console line for slow reads.** A text that only Hazel's slower, recovering parser can read (an unclosed bracket, such as `let x = (`) prints a `SLOW PARSE (...)` line to the console when it is read.
-- **No undo or redo.** The library holds no editor: it reads the text you give it and answers. Undo and redo are part of Hazel's editor, not of this library, so the page that holds the text keeps its history: keep the texts (or each module's text) it has had, and pass an older one again to go back. Going back costs what an edit does: the modules whose text changed since the last call are read again, and the others are not.
-- **The editor is most of the package.** `editor/` is Hazel's whole app, 11 MB of the package's 14, though a page loads it only when a listing's editor starts, and only about 8 MB of it. It comes from a branch of Hazel, `hazeljs` ([hazelgrove/hazel#2857](https://github.com/hazelgrove/hazel/pull/2857)), not yet from `dev`.
-- **One app per listing.** Each listing's frame starts a whole Hazel app, one after another, so a page with many listings takes a while to start them all, and an older phone may not cope; starting them as text ([listings](#listings-in-an-article)) starts the editors only when asked.
-- **Errors name a term, not a place.** An error's `id` is the id of its term in Hazel's syntax tree; the library gives no line and column for it yet.
-- **A stuck value is a debug printout.** Where an error or a hole stopped the evaluation, `{ hazel }` holds an OCaml printout of the term, not Hazel syntax.
-- **Deep programs need a bigger stack.** Hazel's analysis recurses deeply: in Node, a module of about 150 members overflows the default stack (`Stack overflow`). Raise it: `node --stack-size=32000 app.js`, with the shell's own limit raised to match (`ulimit -s 65536`), or Node crashes instead.
+- **No undo.** The library holds no editor of its own; the page keeps its texts, and passes an older one again to go back.
+- **Errors name a term, not a place.** An error's `id` is its term's id in Hazel's syntax tree; no line and column yet. A stuck value is an OCaml printout of the term, not Hazel syntax.
+- **Deep programs need a bigger stack.** In Node, a module of about 150 members overflows the default stack: run `node --stack-size=32000`, with the shell's limit raised to match (`ulimit -s 65536`).
+- **An `SInt` is checked at 32 bits** in compiled code for now; 64 bits come with hazelgrove/hazel#2828.
+- **The editor is most of the package:** `editor/` is 11 MB of its 14, loaded only when a listing's editor starts.
 
 ## About Hazel
 
-Hazel is developed by the Hazel team: see [hazel.org](https://hazel.org) for the project, its papers and the people who make it, and the [contributors on GitHub](https://github.com/hazelgrove/hazel/graphs/contributors) for who has worked on the code. Its source is [hazelgrove/hazel](https://github.com/hazelgrove/hazel), and questions and bugs go to its [issue tracker](https://github.com/hazelgrove/hazel/issues).
+Hazel is developed by the Hazel team: see [hazel.org](https://hazel.org) for the project, its papers and the people who make it, and the [contributors on GitHub](https://github.com/hazelgrove/hazel/graphs/contributors). Its source is [hazelgrove/hazel](https://github.com/hazelgrove/hazel), and questions and bugs go to its [issue tracker](https://github.com/hazelgrove/hazel/issues). What changed in each version of this package: [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
